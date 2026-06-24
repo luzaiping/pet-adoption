@@ -1,0 +1,124 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  USER
+  STAFF
+  ADMIN
+}
+
+enum PetGender {
+  MALE
+  FEMALE
+  UNKNOWN
+}
+
+enum PetStatus {
+  AVAILABLE
+  PENDING
+  ADOPTED
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String?
+  name      String?
+  role      Role     @default(USER)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  applications         AdoptionApplication[] @relation("ApplicantApplications")
+  reviewedApplications AdoptionApplication[] @relation("ReviewerApplications")
+
+  @@map("users")
+}
+
+model Shelter {
+  id        String   @id @default(cuid())
+  name      String
+  address   String?
+  phone     String?
+  email     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  pets Pet[]
+
+  @@map("shelters")
+}
+
+model Pet {
+  id          String    @id @default(cuid())
+  name        String
+  species     String
+  breed       String?
+  age         Int?
+  gender      PetGender @default(UNKNOWN)
+  description String?
+  status      PetStatus @default(AVAILABLE)
+  shelterId   String
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  shelter      Shelter               @relation(fields: [shelterId], references: [id], onDelete: Cascade)
+  images       PetImage[]
+  applications AdoptionApplication[]
+
+  @@index([shelterId])
+  @@index([status])
+  @@map("pets")
+}
+
+model PetImage {
+  id        String   @id @default(cuid())
+  url       String
+  isPrimary Boolean  @default(false) @map("is_primary")
+  petId     String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  pet Pet @relation(fields: [petId], references: [id], onDelete: Cascade)
+
+  @@index([petId])
+  @@map("pet_images")
+}
+
+model AdoptionApplication {
+  id         String            @id @default(cuid())
+  status     ApplicationStatus @default(PENDING)
+  message    String?
+  userId     String
+  petId      String
+  reviewerId String?           @map("reviewer_id")
+  reviewedAt DateTime?         @map("reviewed_at")
+  createdAt  DateTime          @default(now()) @map("created_at")
+  updatedAt  DateTime          @updatedAt @map("updated_at")
+
+  applicant User  @relation("ApplicantApplications", fields: [userId], references: [id], onDelete: Cascade)
+  pet       Pet   @relation(fields: [petId], references: [id], onDelete: Cascade)
+  reviewer  User? @relation("ReviewerApplications", fields: [reviewerId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([petId])
+  @@index([status])
+  @@map("adoption_applications")
+}
