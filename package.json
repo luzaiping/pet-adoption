@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@prisma/client": "5.22.0",
+    "bcryptjs": "^3.0.3",
     "next": "15.5.19",
     "react": "19.2.4",
     "react-dom": "19.2.4"
@@ -25,5 +26,8 @@
     "tailwindcss": "^4",
     "tsx": "^4.22.4",
     "typescript": "^5"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }
