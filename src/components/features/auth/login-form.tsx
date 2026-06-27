@@ -2,7 +2,7 @@
 
 import { useActionState } from 'react';
 import Link from 'next/link';
-import { loginAction } from '@/actions/auth';
+import { loginAction, type LoginFormState } from '@/actions/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,12 +17,10 @@ import {
 } from '@/components/ui/card';
 
 export function LoginForm() {
-  const [errorMessage, formAction, isPending] = useActionState(
+  const [state, formAction, isPending] = useActionState(
     loginAction,
-    undefined
+    {}
   );
-
-  console.log('= errorMessage =', errorMessage);
 
   return (
     <Card className="w-full max-w-sm">
@@ -59,9 +57,9 @@ export function LoginForm() {
           </div>
 
 
-          {errorMessage && (
+          {state?.error && (
             <Alert variant="destructive">
-              <AlertDescription>{errorMessage}</AlertDescription>
+              <AlertDescription>{state.error}</AlertDescription>
             </Alert>
           )}
           
