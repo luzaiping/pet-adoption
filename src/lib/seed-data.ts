@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { PetGender, PetStatus, ApplicationStatus, Role } from '@prisma/client';
 import { prisma } from './prisma';
+import { SPECIES_CAT, SPECIES_DOG } from './constants/pets';
 
 export const DEMO_PASSWORD = 'Demo1234!';
 export const DEMO_ADOPTER_EMAIL = 'demo-adopter@petadoption.dev';
@@ -123,7 +124,7 @@ async function seedPets(shelters: { id: string }[]) {
 
     pets.push({
       name: DOG_NAMES[i],
-      species: 'Dog',
+      species: SPECIES_DOG,
       breed: DOG_BREEDS[i],
       age: 1 + (i % 8),
       gender: i % 2 === 0 ? PetGender.MALE : PetGender.FEMALE,
@@ -135,7 +136,7 @@ async function seedPets(shelters: { id: string }[]) {
 
     pets.push({
       name: CAT_NAMES[i],
-      species: 'Cat',
+      species: SPECIES_CAT,
       breed: CAT_BREEDS[i],
       age: 1 + (i % 8),
       gender: i % 2 === 0 ? PetGender.FEMALE : PetGender.MALE,
