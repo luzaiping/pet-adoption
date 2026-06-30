@@ -36,6 +36,7 @@ enum ApplicationStatus {
   PENDING
   APPROVED
   REJECTED
+  WITHDRAWN
 }
 
 model User {

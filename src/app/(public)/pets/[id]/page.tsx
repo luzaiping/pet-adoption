@@ -3,6 +3,10 @@ import { notFound } from 'next/navigation';
 import { getPetById } from '@/lib/pets';
 import { StatusBadge } from '@/components/features/pets/status-badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { PetStatus } from '@prisma/client';
+import { getPendingPetApplicationByUserId } from '@/lib/applications';
+import { auth } from '@/auth';
+import { ApplicationPanel } from '@/components/features/applications/panel';
 
 // species is a plain string, gender is an enum — both formatted the same
 // generic way ('DOG' -> 'Dog') rather than hardcoding a lookup map, since
@@ -21,6 +25,19 @@ export default async function PetDetailPage({ params }: PetDetailPageProps) {
 
   if (!pet) {
     notFound();
+  }
+
+  const isAvailable = pet.status === PetStatus.AVAILABLE;
+
+  const session = await auth();
+
+  let hasPendingApplication = false;
+
+  if (session?.user?.id) {
+    hasPendingApplication = await getPendingPetApplicationByUserId(
+      pet.id,
+      session?.user?.id,
+    );
   }
 
   const [primaryImage, ...secondaryImages] = pet.images;
@@ -52,7 +69,12 @@ export default async function PetDetailPage({ params }: PetDetailPageProps) {
                   key={image.id}
                   className="relative aspect-square overflow-hidden rounded-md bg-muted"
                 >
-                  <Image src={image.url} alt={pet.name} fill className="object-cover" />
+                  <Image
+                    src={image.url}
+                    alt={pet.name}
+                    fill
+                    className="object-cover"
+                  />
                 </div>
               ))}
             </div>
@@ -80,7 +102,9 @@ export default async function PetDetailPage({ params }: PetDetailPageProps) {
             {pet.age !== null && (
               <div>
                 <dt className="text-muted-foreground">Age</dt>
-                <dd>{pet.age} {pet.age === 1 ? 'year' : 'years'}</dd>
+                <dd>
+                  {pet.age} {pet.age === 1 ? 'year' : 'years'}
+                </dd>
               </div>
             )}
             <div>
@@ -97,13 +121,23 @@ export default async function PetDetailPage({ params }: PetDetailPageProps) {
             <CardContent className="pt-4">
               <p className="text-sm font-medium">{pet.shelter.name}</p>
               {pet.shelter.address && (
-                <p className="text-sm text-muted-foreground">{pet.shelter.address}</p>
+                <p className="text-sm text-muted-foreground">
+                  {pet.shelter.address}
+                </p>
               )}
               {pet.shelter.phone && (
-                <p className="text-sm text-muted-foreground">{pet.shelter.phone}</p>
+                <p className="text-sm text-muted-foreground">
+                  {pet.shelter.phone}
+                </p>
               )}
             </CardContent>
           </Card>
+
+          <ApplicationPanel
+            canApply={isAvailable}
+            hasPendingApplication={hasPendingApplication}
+            petId={pet.id}
+          />
         </div>
       </div>
     </div>
