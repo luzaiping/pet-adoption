@@ -27,6 +27,14 @@ export async function getAdminApplicationQueue() {
         where: {
           status: ApplicationStatus.PENDING,
         },
+        orderBy: [
+          {
+            createdAt: 'asc',
+          },
+          {
+            id: 'asc',
+          },
+        ],
         include: {
           applicant: {
             select: {
@@ -50,3 +58,7 @@ export async function getAdminApplicationQueue() {
 
   return results;
 }
+
+export type AdminApplicationQueue = Awaited<
+  ReturnType<typeof getAdminApplicationQueue>
+>;
