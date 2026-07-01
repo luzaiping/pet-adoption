@@ -48,19 +48,18 @@
 - 详情页的多图缩略图展示行从未在真实数据下运行过 —— 因为当前的种子数据只为每只宠物分配了一张（主）图片；后续可以考虑为至少一只宠物种子数据分配多张图片。
 - `/login` 仍在使用手写的验证逻辑，而非 Zod —— 导致 `/register` 与 `/login` 的实现风格不一致；此项属于低优先级清理任务。
 - `submitApplicationAction` 尚未调用 `assertNotDemoMode()` —— 意味着在演示模式下领养申请仍能被提交。
-- 领养申请撤销流程尚未实现 —— 虽然存在 `WITHDRAWN` 枚举值，但尚未编写撤销的 Server Action 或构建相应的 UI。
+- 领养申请撤销流程尚未实现 —— 当前已存在 `WITHDRAWN` 枚举值，已编写撤销的 Server Action，但还没构建相应的 UI，计划在 User dashboard 里添加入口。
 
 ## 后续步骤（已讨论，尚未开始）
 
-1. **领养申请撤销流程** —— 当前已存在 `WITHDRAWN` 枚举值；需要在宠物详情页（或仪表盘）上编写撤销的 Server Action 并构建 UI。
-2. **管理员审核队列**（需要 TanStack Query —— 目前尚未安装）。
-3. **编写 `assertAdmin()` 辅助函数** —— 将与第一个实际的管理员 Server Action 一并编写（作为 RBAC 三层防御架构的第 3 层）。
-4. **编写 `assertNotDemoMode()` 辅助函数** —— 并完成剩余写路径的演示模式拦截（包括 `submitApplicationAction`）。
-5. **构建 Vercel Cron 路由** —— 用于调用 `resetAndSeedDatabase()`。
-6. **利用 DeepSeek API 实现 AI 宠物简介生成**（需考虑速率限制）。
-7. **最终首页设计走查**（包含 Hero 模块、实时数据统计、推荐宠物、演示模式入口区域） —— 此项已刻意延期。
-8. **构建复杂表单**（宠物创建/编辑） —— 将通过 React Hook Form + Zod + shadcn `Form` 组件实现。
-9. **搭建 Vitest + Testing Library 测试环境**。
-10. **完善 README 架构设计决策章节**、录制演示视频并准备屏幕截图。
-11. **进行移动端响应式适配走查**。
-12. **完成 Vercel 生产部署**。
+1. **管理员审核队列**（需要 TanStack Query —— 目前尚未安装）。
+2. **编写 `assertAdmin()` 辅助函数** —— 将与第一个实际的管理员 Server Action 一并编写（作为 RBAC 三层防御架构的第 3 层）。
+3. **编写 `assertNotDemoMode()` 辅助函数** —— 并完成剩余写路径的演示模式拦截（包括 `submitApplicationAction`）。
+4. **构建 Vercel Cron 路由** —— 用于调用 `resetAndSeedDatabase()`。
+5. **利用 DeepSeek API 实现 AI 宠物简介生成**（需考虑速率限制）。
+6. **最终首页设计走查**（包含 Hero 模块、实时数据统计、推荐宠物、演示模式入口区域） —— 此项已刻意延期。
+7. **构建复杂表单**（宠物创建/编辑） —— 将通过 React Hook Form + Zod + shadcn `Form` 组件实现。
+8. **搭建 Vitest + Testing Library 测试环境**。
+9. **完善 README 架构设计决策章节**、录制演示视频并准备屏幕截图。
+10. **进行移动端响应式适配走查**。
+11. **完成 Vercel 生产部署**。
