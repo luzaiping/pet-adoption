@@ -42,6 +42,12 @@
 - 支持多名用户同时针对同一只宠物提交申请；每名用户对同一只宠物同时只能拥有一个活跃的 `PENDING` 申请（作用域相关疑问已解决 —— 见 `architecture-decisions.md` 第 14 条）。
 - `/pets/[id]` 页面上的 `ApplicationPanel` —— 采用了可展开的内联表单（而非对话框弹窗），包含申请处理中状态卡片，并对接了 sonner 的成功/错误 Toast 提示。
 
+### 管理员审核队列（进行中）
+
+- 已创建 `assertAdmin()`，管理员 approve/reject Server Actions 均在执行数据操作前调用该守卫。
+- 已创建管理员申请队列数据查询：仅返回仍有 `PENDING` 申请的 `AVAILABLE` 宠物，包含一张主图、待处理申请及申请人的安全字段（`id` / `name` / `email`），并采用 `createdAt` + `id` 确定性排序。
+- 已创建 approve/reject Server Actions。approve 的三项状态更新位于同一事务中；批量拒绝仅影响同一宠物下除目标申请外的其他 `PENDING` 申请，不覆盖历史审核记录。
+
 ## 已知问题 / 观察清单
 
 - `/pets` 列表页的代码质量被开发者标记为平庸 —— 功能虽未损坏，但它是后续进行更细致的代码审查走查的候选对象。
@@ -52,14 +58,13 @@
 
 ## 后续步骤（已讨论，尚未开始）
 
-1. **管理员审核队列**（需要 TanStack Query —— 目前尚未安装）。
-2. **编写 `assertAdmin()` 辅助函数** —— 将与第一个实际的管理员 Server Action 一并编写（作为 RBAC 三层防御架构的第 3 层）。
-3. **编写 `assertNotDemoMode()` 辅助函数** —— 并完成剩余写路径的演示模式拦截（包括 `submitApplicationAction`）。
-4. **构建 Vercel Cron 路由** —— 用于调用 `resetAndSeedDatabase()`。
-5. **利用 DeepSeek API 实现 AI 宠物简介生成**（需考虑速率限制）。
-6. **最终首页设计走查**（包含 Hero 模块、实时数据统计、推荐宠物、演示模式入口区域） —— 此项已刻意延期。
-7. **构建复杂表单**（宠物创建/编辑） —— 将通过 React Hook Form + Zod + shadcn `Form` 组件实现。
-8. **搭建 Vitest + Testing Library 测试环境**。
-9. **完善 README 架构设计决策章节**、录制演示视频并准备屏幕截图。
-10. **进行移动端响应式适配走查**。
-11. **完成 Vercel 生产部署**。
+1. **完成管理员审核队列** —— 补齐 dashboard 范围的 QueryProvider，并实现基于 TanStack Query mutation 的 Admin UI。
+2. **编写 `assertNotDemoMode()` 辅助函数** —— 并完成剩余写路径的演示模式拦截（包括 `submitApplicationAction`）。
+3. **构建 Vercel Cron 路由** —— 用于调用 `resetAndSeedDatabase()`。
+4. **利用 DeepSeek API 实现 AI 宠物简介生成**（需考虑速率限制）。
+5. **最终首页设计走查**（包含 Hero 模块、实时数据统计、推荐宠物、演示模式入口区域） —— 此项已刻意延期。
+6. **构建复杂表单**（宠物创建/编辑） —— 将通过 React Hook Form + Zod + shadcn `Form` 组件实现。
+7. **搭建 Vitest + Testing Library 测试环境**。
+8. **完善 README 架构设计决策章节**、录制演示视频并准备屏幕截图。
+9. **进行移动端响应式适配走查**。
+10. **完成 Vercel 生产部署**。
