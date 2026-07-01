@@ -44,7 +44,7 @@
 
 ### 管理员审核队列
 
-- 已创建 `assertAdmin()`，管理员 approve/reject Server Actions 均在执行数据操作前调用该守卫。
+- 已创建 `assertAdmin()`，管理员 approve/reject Server Actions 均在执行数据操作前调用该守卫；守卫会同时复核数据库中的用户存在性和当前 ADMIN 角色，陈旧 JWT 不会进入 reviewer 写入路径。
 - 已创建管理员申请队列数据查询：仅返回仍有 `PENDING` 申请的 `AVAILABLE` 宠物，包含一张主图、待处理申请及申请人的安全字段（`id` / `name` / `email`），并采用 `createdAt` + `id` 确定性排序。
 - 已创建 approve/reject Server Actions。approve 的三项状态更新位于同一事务中；批量拒绝仅影响同一宠物下除目标申请外的其他 `PENDING` 申请，不覆盖历史审核记录。
 - 已在 dashboard layout 范围挂载 TanStack Query Provider；公开页面不加载该客户端状态依赖。
