@@ -28,7 +28,6 @@ enum PetGender {
 
 enum PetStatus {
   AVAILABLE
-  PENDING
   ADOPTED
 }
 

@@ -100,10 +100,18 @@ const CAT_BREEDS = [
   'Abyssinian', 'Birman', 'Domestic Longhair', 'Tabby', 'Calico',
 ];
 
-// Roughly 60% available, 20% pending, 20% adopted.
+// Exactly 70% available and 30% adopted across the 30 seeded pets.
 const STATUS_CYCLE: PetStatus[] = [
-  PetStatus.AVAILABLE, PetStatus.AVAILABLE, PetStatus.AVAILABLE,
-  PetStatus.PENDING, PetStatus.ADOPTED,
+  PetStatus.AVAILABLE,
+  PetStatus.AVAILABLE,
+  PetStatus.AVAILABLE,
+  PetStatus.AVAILABLE,
+  PetStatus.AVAILABLE,
+  PetStatus.AVAILABLE,
+  PetStatus.AVAILABLE,
+  PetStatus.ADOPTED,
+  PetStatus.ADOPTED,
+  PetStatus.ADOPTED,
 ];
 
 async function seedPets(shelters: { id: string }[]) {
@@ -129,7 +137,7 @@ async function seedPets(shelters: { id: string }[]) {
       age: 1 + (i % 8),
       gender: i % 2 === 0 ? PetGender.MALE : PetGender.FEMALE,
       description: `${DOG_NAMES[i]} is a friendly ${DOG_BREEDS[i]} looking for a loving home.`,
-      status: STATUS_CYCLE[i % STATUS_CYCLE.length],
+      status: STATUS_CYCLE[(i * 2) % STATUS_CYCLE.length],
       shelterId: shelters[i % shelters.length].id,
       imageFile: `dog-${num}.jpg`,
     });
@@ -141,7 +149,7 @@ async function seedPets(shelters: { id: string }[]) {
       age: 1 + (i % 8),
       gender: i % 2 === 0 ? PetGender.FEMALE : PetGender.MALE,
       description: `${CAT_NAMES[i]} is a sweet ${CAT_BREEDS[i]} looking for a loving home.`,
-      status: STATUS_CYCLE[(i + 2) % STATUS_CYCLE.length],
+      status: STATUS_CYCLE[(i * 2 + 1) % STATUS_CYCLE.length],
       shelterId: shelters[(i + 1) % shelters.length].id,
       imageFile: `cat-${num}.jpg`,
     });
@@ -189,16 +197,28 @@ async function seedApplications(
         },
       });
       createdCount++;
-    } else if (pet.status === PetStatus.PENDING) {
-      await prisma.adoptionApplication.create({
-        data: {
-          userId: applicant.id,
-          petId: pet.id,
-          status: ApplicationStatus.PENDING,
-          message: 'I have a big yard and experience with this breed.',
-        },
+    } else if (applicantIndex % 5 === 0) {
+      // Pending applications belong to the application, not the pet. Keep the
+      // pet available and seed two competing applicants for the admin queue.
+      const secondApplicant = applicants[applicantIndex % applicants.length];
+
+      await prisma.adoptionApplication.createMany({
+        data: [
+          {
+            userId: applicant.id,
+            petId: pet.id,
+            status: ApplicationStatus.PENDING,
+            message: 'I have a big yard and experience with this breed.',
+          },
+          {
+            userId: secondApplicant.id,
+            petId: pet.id,
+            status: ApplicationStatus.PENDING,
+            message: 'I can provide a patient and loving home.',
+          },
+        ],
       });
-      createdCount++;
+      createdCount += 2;
     } else if (applicantIndex % 4 === 0) {
       // Sprinkle a few rejected applications onto otherwise-available pets.
       await prisma.adoptionApplication.create({

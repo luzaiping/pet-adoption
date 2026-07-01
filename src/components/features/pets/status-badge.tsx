@@ -7,11 +7,6 @@ const statusMap: Record<PetStatus, { label: string; className: string }> = {
     className:
       'bg-[var(--success)] text-[var(--success-foreground)] hover:bg-[var(--success)]',
   },
-  PENDING: {
-    label: 'Pending',
-    className:
-      'bg-[var(--warning)] text-[var(--warning-foreground)] hover:bg-[var(--warning)]',
-  },
   ADOPTED: {
     label: 'Adopted',
     className:
