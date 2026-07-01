@@ -86,6 +86,15 @@ Server Actions 绝不能依赖中间件来进行会话验证（Session Validatio
 
 `AdoptionApplication.message` 是一个可选的留言留言字段。在用户点击 **Apply（申请）** 时，不要打开对话框（Dialog），而是直接在页面上展开一个内联表单（文本域 + 确认/取消）。Schema 依然保持可选，通过占位符文本引导用户根据意愿填写留言。
 
+### 15. Admin Review Queue：approve 的事务性逻辑与状态流转
+approve 一条申请时，三步操作包在同一 $transaction：目标申请置 APPROVED、同一宠物下其他 PENDING 申请批量置 REJECTED、Pet.status 直接从 AVAILABLE 改为 ADOPTED（跳过 Pet 层面的 PENDING 中间态——Pet.status 的 PENDING 值在当前系统设计里实际未被使用）。reject 单条申请是独立操作，不影响宠物状态和其他申请。
+
+### 16. assertAdmin() + Admin layout 双层防御正式建立
+assertAdmin() 放在 src/lib/auth-guards.ts，随第一个 admin Server Action 一起创建（RBAC 第三层）。app/(dashboard)/dashboard/admin/layout.tsx 作为第二层，页面级 role 检查，非 ADMIN redirect 到 /dashboard/forbidden。两层各自独立，缺一不可。
+
+### 17. TanStack Query 正式引入，scope 限定在 dashboard
+providers/query-provider.tsx 只挂在 app/(dashboard)/layout.tsx，不挂根 layout——公开页面是纯 Server Component，不需要 QueryClient，避免把客户端状态管理污染到本不需要它的区域。Admin mutations（approve/reject）是项目第一批使用 useMutation 的操作。
+
 ---
 
 ## 已拒绝 / 已移除的方案
