@@ -18,7 +18,7 @@ export async function submitApplicationAction(
 ): Promise<ApplicationFormState> {
   const petId = formData.get('petId') as string;
   const currentPath = `/pets/${petId}`;
-  
+
   const session = await auth();
   if (!session?.user) {
     redirect(`/login?callbackUrl=${currentPath}`);
@@ -26,25 +26,29 @@ export async function submitApplicationAction(
 
   const message = formData.get('message') as string;
   const parsed = applicationSchema.safeParse({
-    message
+    message,
   });
 
   if (!parsed.success) {
     return {
-      message: parsed.error.issues[0]?.message ?? 'Message exceeds maxium length.',
-      success: false
-    }
+      message:
+        parsed.error.issues[0]?.message ?? 'Message exceeds maxium length.',
+      success: false,
+    };
   }
 
   const existingPet = await prisma.pet.count({
-    where: { id: petId }
+    where: { id: petId },
   });
 
   if (!existingPet) {
-    return { message: 'Pet does not exist, please check first.', success: false };
+    return {
+      message: 'Pet does not exist, please check first.',
+      success: false,
+    };
   }
 
-  const result = await prisma.$transaction(async tx => {
+  const result = await prisma.$transaction(async (tx) => {
     const canApply = await tx.pet.findFirst({
       where: {
         id: petId,
@@ -52,10 +56,10 @@ export async function submitApplicationAction(
         applications: {
           none: {
             userId: session?.user.id,
-            status: ApplicationStatus.PENDING
-          }
-        }
-      }
+            status: ApplicationStatus.PENDING,
+          },
+        },
+      },
     });
 
     if (!canApply) {
@@ -66,8 +70,8 @@ export async function submitApplicationAction(
       data: {
         message: parsed.data.message,
         userId: session?.user.id,
-        petId: formData.get('petId') as string
-      }
+        petId: formData.get('petId') as string,
+      },
     });
 
     return { success: true };
@@ -78,4 +82,48 @@ export async function submitApplicationAction(
   }
 
   return result;
+}
+
+export type WithdrawActionResult = {
+  success: boolean;
+  message?: string;
+};
+
+export async function withdrawApplicationAction(
+  applicationId: string,
+): Promise<WithdrawActionResult> {
+  const session = await auth();
+
+  if (!session?.user) {
+    redirect('/login');
+  }
+
+  const updateResult = await prisma.adoptionApplication.updateMany({
+    where: {
+      id: applicationId,
+      userId: session?.user?.id,
+      status: ApplicationStatus.PENDING,
+    },
+    data: { status: ApplicationStatus.WITHDRAWN },
+  });
+
+  if (updateResult.count === 0) {
+    return {
+      success: false,
+      message:
+        'This application cannot be withdrawn. It may have already been reviewed.',
+    };
+  }
+
+  const application = await prisma.adoptionApplication.findUnique({
+    where: { id: applicationId },
+    select: { petId: true },
+  });
+
+  revalidatePath('/dashboard/applications');
+  if (application) {
+    revalidatePath(`/pets/${application.petId}`);
+  }
+
+  return { success: true };
 }
