@@ -58,7 +58,7 @@ Neon 在闲置约 5 分钟后会自动挂起计算资源，并在下一次请求
 
 ### 10. 公共宠物浏览
 
-查询逻辑集中在 `src/lib/pets.ts`（`getPets()`, `getPetById()`）中，而不是直接内联写在 `page.tsx` 里 —— 这是为了预备未来管理员宠物页面对其进行复用。所有的三种宠物状态（Available / Pending / Adopted）都会在前端公开发布，并通过一个共享的 `StatusBadge` 辅以颜色区分 —— 选择此方案而非“仅展示 Available”，是为了给人一种更具透明度且系统“活着”的感觉。分页采用基于偏移量（Offset-based）的 `skip`/`take` 模式，每页 12 条 —— 选用此方案而非基于游标（Cursor-based）的分页，是因为区区 30 条记录并不值得去增加实现复杂度；它需要一个确定性的排序 `orderBy`（例如 `createdAt` + 用 `id` 作为决胜项），否则分页可能会出现重复或遗漏项。更改物种筛选时会将 `page` 重置为 1 —— 否则切换分类时可能会落入一个超出范围的空白页面。`pagination.tsx` 和 `status-badge.tsx` 被构建为通用的、可复用的组件，而非宠物特异性组件 —— 同样是为了预备未来管理员宠物页面的复用。详情页上没有设计“相似宠物”板块 —— 刻意保持简单。在 `/pets` 和 `/pets/[id]` 上均加入了 `loading.tsx`（基于 Suspense 的骨架屏） —— 这主要是为了应对已记录的 Neon 数据库冷启动延迟；它在分页/筛选条件改变时也会短暂触发，而不仅仅是首次加载。
+查询逻辑集中在 `src/lib/pets.ts`（`getPets()`, `getPetById()`）中，而不是直接内联写在 `page.tsx` 里 —— 这是为了预备未来管理员宠物页面对其进行复用。宠物只有两种状态（Available / Adopted），并通过共享的 `StatusBadge` 辅以颜色区分。`PENDING` 只属于领养申请状态，不属于宠物状态：允许多人同时申请时，宠物在审批通过前始终保持 `AVAILABLE`，审批通过后直接变为 `ADOPTED`。分页采用基于偏移量（Offset-based）的 `skip`/`take` 模式，每页 12 条 —— 选用此方案而非基于游标（Cursor-based）的分页，是因为区区 30 条记录并不值得去增加实现复杂度；它需要一个确定性的排序 `orderBy`（例如 `createdAt` + 用 `id` 作为决胜项），否则分页可能会出现重复或遗漏项。更改物种筛选时会将 `page` 重置为 1 —— 否则切换分类时可能会落入一个超出范围的空白页面。`pagination.tsx` 和 `status-badge.tsx` 被构建为通用的、可复用的组件，而非宠物特异性组件 —— 同样是为了预备未来管理员宠物页面的复用。详情页上没有设计“相似宠物”板块 —— 刻意保持简单。在 `/pets` 和 `/pets/[id]` 上均加入了 `loading.tsx`（基于 Suspense 的骨架屏） —— 这主要是为了应对已记录的 Neon 数据库冷启动延迟；它在分页/筛选条件改变时也会短暂触发，而不仅仅是首次加载。
 
 ### 11. 设计系统 Token
 
@@ -87,7 +87,7 @@ Server Actions 绝不能依赖中间件来进行会话验证（Session Validatio
 `AdoptionApplication.message` 是一个可选的留言留言字段。在用户点击 **Apply（申请）** 时，不要打开对话框（Dialog），而是直接在页面上展开一个内联表单（文本域 + 确认/取消）。Schema 依然保持可选，通过占位符文本引导用户根据意愿填写留言。
 
 ### 15. Admin Review Queue：approve 的事务性逻辑与状态流转
-approve 一条申请时，三步操作包在同一 $transaction：目标申请置 APPROVED、同一宠物下其他 PENDING 申请批量置 REJECTED、Pet.status 直接从 AVAILABLE 改为 ADOPTED（跳过 Pet 层面的 PENDING 中间态——Pet.status 的 PENDING 值在当前系统设计里实际未被使用）。reject 单条申请是独立操作，不影响宠物状态和其他申请。
+approve 一条申请时，三步操作包在同一 $transaction：目标申请置 APPROVED、同一宠物下其他 PENDING 申请批量置 REJECTED、Pet.status 从 AVAILABLE 改为 ADOPTED。`PetStatus` 不定义 PENDING；PENDING 仅用于 `ApplicationStatus`。reject 单条申请是独立操作，不影响宠物状态和其他申请。
 
 ### 16. assertAdmin() + Admin layout 双层防御正式建立
 assertAdmin() 放在 src/lib/auth-guards.ts，随第一个 admin Server Action 一起创建（RBAC 第三层）。app/(dashboard)/dashboard/admin/layout.tsx 作为第二层，页面级 role 检查，非 ADMIN redirect 到 /dashboard/forbidden。两层各自独立，缺一不可。

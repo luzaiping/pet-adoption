@@ -7,9 +7,9 @@
 ### 基础设施
 
 - 已搭建 Next.js 15.5.19 脚手架，当前 Git 分支为 `feature/upwork-demo`。
-- 引入 Prisma 5.22.0 并编写 `schema.prisma`（包含 5 个模型，4 个枚举 —— `ApplicationStatus` 现已包含 `WITHDRAWN`），采用 Neon Postgres 16，已应用初始迁移；针对 `ApplicationStatus.WITHDRAWN` 已应用附加迁移。
+- 引入 Prisma 5.22.0 并编写 `schema.prisma`（包含 5 个模型，4 个枚举 —— `PetStatus` 仅包含 `AVAILABLE` / `ADOPTED`，`ApplicationStatus` 包含 `PENDING` / `APPROVED` / `REJECTED` / `WITHDRAWN`），采用 Neon Postgres 16，已应用初始迁移；针对 `ApplicationStatus.WITHDRAWN` 已应用附加迁移。
 - 编写了单例模式的 `src/lib/prisma.ts`（支持热重载 HMR 安全），连接性已通过验证。
-- 编写了 `seed-data.ts` / `prisma/seed.ts` —— 已灌入 5 个用户（2 个演示账号 + 3 个填充的申请人）、3 个收容所、30 只宠物（15 只狗 / 15 只猫，状态分布约为 60% 可领养、20% 审批中、20% 已领养）以及 16 份领养申请。
+- 编写了 `seed-data.ts` / `prisma/seed.ts` —— 灌入 5 个用户（2 个演示账号 + 3 个填充的申请人）、3 个收容所、30 只宠物（15 只狗 / 15 只猫，精确分布为 70% 可领养、30% 已领养）以及 19 份领养申请。待审核状态只存在于申请上；部分可领养宠物会同时拥有两份 `PENDING` 申请，以覆盖管理员并发审核场景。
 - 搭建了路由组 `(public)` / `(auth)` / `(dashboard)` 目录结构（在早期发现并修复了路由组与 URL 的命名冲突 Bug）。
 - 初始化了 shadcn/ui，定制了 OKLCH 设计系统的 Token，配置了 Fraunces（标题字体） + Plus Jakarta Sans（正文字体）；添加了 `components/ui/textarea.tsx` 组件。
 - 引入 `sonner@2.0.7` —— 全局 `<Toaster/>` 已挂载在根目录的 `app/layout.tsx` 中。
