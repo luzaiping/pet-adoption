@@ -1,89 +1,66 @@
-# Progress Snapshot — Pet Adoption System
-(Reflects current state, not a chronological log)
+# 进度快照 —— 宠物领养系统
 
-## Completed
+（反映当前系统状态，而非按时间顺序记录的日志）
 
-### Infrastructure
-- Next.js 15.5.19 scaffolded, git branch `feature/upwork-demo`
-- Prisma 5.22.0 + schema.prisma (5 models, 4 enums), Neon Postgres
-  16, initial migration applied
-- `src/lib/prisma.ts` singleton (HMR-safe), connectivity verified
-- `seed-data.ts` / `prisma/seed.ts` — seeded 5 users (2 demo
-  accounts + 3 filler applicants), 3 shelters, 30 pets (15 dog /
-  15 cat, ~60/20/20% available/pending/adopted), 16 adoption
-  applications
-- Route groups `(public)/(auth)/(dashboard)` scaffolded (route
-  group/URL collision bug found and fixed early on)
-- shadcn/ui initialized, OKLCH design tokens, Fraunces (heading) +
-  Plus Jakarta Sans (body)
+## 已完成
 
-### Auth & Authorization
-- NextAuth v5 wired: `auth.config.ts` (edge-safe) + `auth.ts`
-  (full, Credentials provider, bcrypt), no PrismaAdapter
-- `/login` page — `LoginForm` + `loginAction`, `signIn()` +
-  `AuthError` pattern — verified (success + failure paths)
-- `middleware.ts` — protects `/dashboard/:path*`, verified
-  (unauthenticated → `/login`)
-- Role-based admin gating — `authorized()` callback extended to
-  redirect non-admin users away from `/dashboard/admin/*` to
-  `/dashboard/forbidden` — verified with both demo accounts
-- `/dashboard/forbidden` page (shadcn Alert + Button)
-- `/register` page — Zod-validated (`schemas/auth.ts`,
-  `registerSchema`), `registerAction` (uniqueness check, bcrypt
-  hash, auto sign-in, confirm-password field, no password
-  echo-back on error), gated behind `IS_DEMO` — verified including
-  the demo-mode block
-- Already-logged-in users visiting `/login`/`/register` are
-  redirected to `/dashboard` via a page-level `auth()` check
+### 基础设施
 
-### Public Pet Browsing
-- `src/lib/pets.ts` — `getPets()` (filter by species, offset
-  pagination, deterministic `orderBy`) and `getPetById()` (includes
-  images + shelter)
-- `/pets` list page (ChatGPT-implemented) — all statuses shown via
-  `StatusBadge`, species filter resets page to 1, 12/page pagination
-  — functionally verified, but flagged by the developer as lower
-  implementation quality than other pages; may be worth a review
-  pass later
-- `/pets/[id]` detail page (Claude-implemented, after taking over
-  from ChatGPT) — `await params`, `notFound()` + custom
-  `not-found.tsx` for missing pets, image gallery, species/breed/
-  age/gender/description, shelter info — verified, except the
-  secondary-thumbnails code path is untested (current seed data only
-  has primary images per pet)
-- `loading.tsx` on both `/pets` and `/pets/[id]` (Suspense
-  skeletons, targets Neon cold-start delay) — verified to also fire
-  on pagination/filter changes
-- Shared components: `pet-card.tsx`, `pet-filters.tsx`,
-  `pagination.tsx`, `status-badge.tsx` — last two built generic,
-  intended for reuse by the future admin pets page
+- 已搭建 Next.js 15.5.19 脚手架，当前 Git 分支为 `feature/upwork-demo`。
+- 引入 Prisma 5.22.0 并编写 `schema.prisma`（包含 5 个模型，4 个枚举 —— `ApplicationStatus` 现已包含 `WITHDRAWN`），采用 Neon Postgres 16，已应用初始迁移；针对 `ApplicationStatus.WITHDRAWN` 已应用附加迁移。
+- 编写了单例模式的 `src/lib/prisma.ts`（支持热重载 HMR 安全），连接性已通过验证。
+- 编写了 `seed-data.ts` / `prisma/seed.ts` —— 已灌入 5 个用户（2 个演示账号 + 3 个填充的申请人）、3 个收容所、30 只宠物（15 只狗 / 15 只猫，状态分布约为 60% 可领养、20% 审批中、20% 已领养）以及 16 份领养申请。
+- 搭建了路由组 `(public)` / `(auth)` / `(dashboard)` 目录结构（在早期发现并修复了路由组与 URL 的命名冲突 Bug）。
+- 初始化了 shadcn/ui，定制了 OKLCH 设计系统的 Token，配置了 Fraunces（标题字体） + Plus Jakarta Sans（正文字体）；添加了 `components/ui/textarea.tsx` 组件。
+- 引入 `sonner@2.0.7` —— 全局 `<Toaster/>` 已挂载在根目录的 `app/layout.tsx` 中。
+- `tsconfig.json` —— 启用了 `noUnusedLocals` / `noUnusedParameters`；ESLint —— 将 `@typescript-eslint/no-unused-vars` 设置为错误级别。
 
-## Known Issues / Watch Items
-- `/pets` list page quality flagged as mediocre by the developer —
-  not broken, but a candidate for a closer review pass later
-- Detail page's multi-image thumbnail row has never been exercised
-  against real data — current seed only assigns one (primary) image
-  per pet; consider seeding at least one pet with multiple images
-- `/login` still uses hand-written validation, not Zod — `/register`
-  and `/login` are now inconsistent; low-priority cleanup
+### 身份验证与授权
 
-## Next Steps (discussed, not yet started)
-1. Adoption application submission flow — in scoping; open
-   questions not yet resolved: can multiple users apply to the same
-   pet concurrently, can the same user re-apply to a pet they
-   already applied to, where to redirect after a successful
-   submission
-2. Admin review queue (needs TanStack Query — not yet installed)
-3. `assertAdmin()` helper — to be written alongside the first real
-   admin Server Action (layer 3 of the RBAC defense plan)
-4. `assertNotDemoMode()` helper + remaining Demo Mode write-blocking
-5. Vercel Cron route calling `resetAndSeedDatabase()`
-6. AI pet-bio generation via DeepSeek API (rate-limited)
-7. Final homepage design pass (hero, live stats, featured pets,
-   demo entry section) — deliberately deferred
-8. Complex forms (pet create/edit) via React Hook Form + Zod +
-   shadcn `Form`
-9. Vitest + Testing Library setup
-10. README "Design Decisions" section, demo video, screenshots
-11. Mobile responsive pass
-12. Vercel deployment
+- 接入 NextAuth v5：拆分为 `auth.config.ts`（边缘安全） + `auth.ts`（包含全量配置、凭据提供者、bcrypt），未使用 PrismaAdapter。
+- `/login` 页面 —— 包含 `LoginForm` + `loginAction`，采用 `signIn()` + `AuthError` 模式 —— 已验证（成功与失败路径均通过）。
+- `middleware.ts` —— 保护 `/dashboard/:path*` 路径，已验证（未认证用户 → 重定向至 `/login`）。
+- 基于角色的管理员权限门禁 —— 扩展了 `authorized()` 回调，将非管理员用户从 `/dashboard/admin/*` 重定向至 `/dashboard/forbidden` —— 已使用两个演示账号进行了验证。
+- 编写了 `/dashboard/forbidden` 页面（基于 shadcn 的 Alert 与 Button 组件）。
+- `/register` 页面 —— 通过 Zod 进行校验（使用 `schemas/auth.ts` 中的 `registerSchema`），编写了 `registerAction`（包含唯一性检查、bcrypt 密码哈希、自动登录、确认密码字段，且在发生错误时绝不回显密码），该页面由 `IS_DEMO` 变量控制 —— 包含演示模式拦截在内的功能均已通过验证。
+- 已登录用户访问 `/login` / `/register` 时，将通过页面级别的 `auth()` 检查被重定向至 `/dashboard`。
+
+### 公共宠物浏览
+
+- `src/lib/pets.ts` —— 编写了 `getPets()`（支持按物种筛选、偏移量分页、确定性 `orderBy` 排序）以及 `getPetById()`（包含关联的图片和收容所信息）。
+- `/pets` 列表页（由 ChatGPT 实现） —— 通过 `StatusBadge` 展示所有状态的宠物，切换物种筛选时会将页码重置为 1，每页展示 12 条记录 —— 功能已验证，但被开发者标记为实现质量弱于其他页面，后续值得进行一次代码审查走查。
+- `/pets/[id]` 详情页（在接管 ChatGPT 的工作后由 Claude 实现） —— 采用 `await params` 模式，针对不存在的宠物调用 `notFound()` 并提供自定义的 `not-found.tsx` 页面，实现了图片画廊、物种/品种/年龄/性别/描述展示、收容所信息以及领养申请提交面板的对接 —— 除了次级缩略图代码路径尚未测试外（当前种子数据每只宠物仅分配了一张主图），其余均已通过验证。
+- 在 `/pets` 和 `/pets/[id]` 页面均加入了 `loading.tsx`（基于 Suspense 的骨架屏，用于应对 Neon 数据库冷启动延迟） —— 已验证其在分页/筛选条件改变时也会短暂触发。
+- 共享组件包括：`pet-card.tsx`、`pet-filters.tsx`、`pagination.tsx`、`status-badge.tsx` —— 后面两个组件采用了通用化设计，预备供未来的管理员宠物页面复用。
+
+### 领养申请提交
+
+- 将 `ApplicationStatus.WITHDRAWN` 引入至 Prisma 枚举并执行了迁移（目前仅包含枚举修改 —— 撤销 UI 和 Action 尚未构建）。
+- `schemas/applications.ts` —— 包含可选的留言字段，通过 Zod 限制最大 300 字符。
+- `src/lib/applications.ts` —— 编写了 `getPendingPetApplicationByUserId()` 函数。
+- `actions/applications.ts` —— 编写了 `submitApplicationAction`（使用 `useActionState`）：未认证用户 → 重定向至 `/login?callbackUrl=/pets/{id}`；校验宠物是否存在且状态为 `AVAILABLE`；在事务（Transaction）内部阻止同一用户对同一宠物重复提交 `PENDING` 申请（未采用部分唯一索引）；该操作**不**改变 `Pet.status`；成功后执行 `revalidatePath` 并保持在原页面（弹出 Toast 提示，不执行重定向）。
+- 支持多名用户同时针对同一只宠物提交申请；每名用户对同一只宠物同时只能拥有一个活跃的 `PENDING` 申请（作用域相关疑问已解决 —— 见 `architecture-decisions.md` 第 14 条）。
+- `/pets/[id]` 页面上的 `ApplicationPanel` —— 采用了可展开的内联表单（而非对话框弹窗），包含申请处理中状态卡片，并对接了 sonner 的成功/错误 Toast 提示。
+
+## 已知问题 / 观察清单
+
+- `/pets` 列表页的代码质量被开发者标记为平庸 —— 功能虽未损坏，但它是后续进行更细致的代码审查走查的候选对象。
+- 详情页的多图缩略图展示行从未在真实数据下运行过 —— 因为当前的种子数据只为每只宠物分配了一张（主）图片；后续可以考虑为至少一只宠物种子数据分配多张图片。
+- `/login` 仍在使用手写的验证逻辑，而非 Zod —— 导致 `/register` 与 `/login` 的实现风格不一致；此项属于低优先级清理任务。
+- `submitApplicationAction` 尚未调用 `assertNotDemoMode()` —— 意味着在演示模式下领养申请仍能被提交。
+- 领养申请撤销流程尚未实现 —— 虽然存在 `WITHDRAWN` 枚举值，但尚未编写撤销的 Server Action 或构建相应的 UI。
+
+## 后续步骤（已讨论，尚未开始）
+
+1. **领养申请撤销流程** —— 当前已存在 `WITHDRAWN` 枚举值；需要在宠物详情页（或仪表盘）上编写撤销的 Server Action 并构建 UI。
+2. **管理员审核队列**（需要 TanStack Query —— 目前尚未安装）。
+3. **编写 `assertAdmin()` 辅助函数** —— 将与第一个实际的管理员 Server Action 一并编写（作为 RBAC 三层防御架构的第 3 层）。
+4. **编写 `assertNotDemoMode()` 辅助函数** —— 并完成剩余写路径的演示模式拦截（包括 `submitApplicationAction`）。
+5. **构建 Vercel Cron 路由** —— 用于调用 `resetAndSeedDatabase()`。
+6. **利用 DeepSeek API 实现 AI 宠物简介生成**（需考虑速率限制）。
+7. **最终首页设计走查**（包含 Hero 模块、实时数据统计、推荐宠物、演示模式入口区域） —— 此项已刻意延期。
+8. **构建复杂表单**（宠物创建/编辑） —— 将通过 React Hook Form + Zod + shadcn `Form` 组件实现。
+9. **搭建 Vitest + Testing Library 测试环境**。
+10. **完善 README 架构设计决策章节**、录制演示视频并准备屏幕截图。
+11. **进行移动端响应式适配走查**。
+12. **完成 Vercel 生产部署**。

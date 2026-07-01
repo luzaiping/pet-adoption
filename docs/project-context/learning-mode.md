@@ -1,53 +1,20 @@
-# Learning Mode (active during current project phase)
+# 学习模式（当前项目阶段激活）
 
-This project is currently in a learning-focused phase, not an
-efficiency-first one. Apply the following on top of the standard
-tech-stack and process rules:
+本项目目前处于以学习为核心的阶段，而非效率优先阶段。在标准技术栈和流程规范的基础上，请务必应用以下规则：
 
-- Implement one clearly-scoped small feature or sub-step at a time.
-  Stop after completing it and wait for confirmation before moving on
-  — do not chain multiple steps together unprompted.
-- Explain key or non-trivial code as you write it, especially
-  anything introducing a new concept, library, or pattern. Implement
-  and explain together — do not silently complete a step and only
-  explain if asked.
-- Before implementing anything non-trivial (an architecture choice, a
-  new pattern, introducing a new library), describe the approach and
-  reasoning in plain text first, and wait for confirmation before
-  writing any code. If the tool you're running in has a dedicated
-  mode for this (e.g. Claude Code's Plan Mode, Codex's suggest mode),
-  use it — but follow this instruction even without one.
-- Stay strictly within the agreed scope for the current step. If the
-  task seems to need more than what was agreed, stop and flag it
-  rather than expanding the scope on your own.
+- **单步精细实现**：每次仅实现一个职责边界清晰的小功能或子步骤。完成后请停下来等待确认，切勿在未受提示的情况下擅自将多个步骤串联执行。
+- **即时代码讲解**：在编写关键或非平庸（non-trivial）的代码时，务必同步进行解释，特别是任何引入了新概念、新库或新模式的代码。实现与讲解必须同步进行 —— 绝不能默默写完后等被问及才做出解释。
+- **架构与方案先行**：在实现任何非平庸的功能（如架构选择、新模式、引入新库）之前，必须先用纯文本描述你的切入方法和推导逻辑，并**等待确认后再编写任何代码**。如果当前运行的工具拥有专属的规划模式（例如 Claude Code 的 Plan Mode、Codex 的 suggest mode），请优先使用 —— 但即使没有该模式，也必须严格遵守此项指示。
+- **严守既定边界**：严格控制在当前步骤已约定的范围内。如果发现任务所需的改动超出了既定范围，请立即停下来并进行标记提示，切勿自行扩大开发范围。
 
-## Attempt-first workflow
+## 尝试优先工作流（Attempt-first workflow）
 
-For a given small step, the developer may attempt the implementation
-themselves before asking the agent to take over. When that happens,
-look for these inline markers and respond accordingly — do not guess
-intent from the code state alone, since an empty function body could
-mean "didn't attempt" or "tried and gave up":
+对于给定的某个小步骤，开发者可能会在请求 AI 接管之前自己先尝试编写实现。当出现这种情况时，请寻找以下**内联标记**并做出相应回应 —— 切勿单从代码状态来盲目猜测意图，因为一个空函数体既可能代表“未尝试”，也可能代表“尝试了但最终放弃”：
 
-- `CLAUDE-REVIEW`: the developer wrote this and wants it checked.
-  Review for correctness first; if it's right, say so briefly and
-  move on — don't over-explain something that's already correct.
-- `CLAUDE-WRITE`: not attempted. Implement it and explain the
-  reasoning at the normal teaching-mode depth (see above).
-- `CLAUDE-STUCK`: the developer tried and got stuck, or believes
-  their attempt is wrong. Their attempt is left in place below the
-  marker — read it first. Explain specifically what was wrong with
-  their approach (not just what the correct approach is) before or
-  alongside giving the corrected implementation.
+- `CLAUDE-REVIEW`：开发者编写了此部分代码并希望进行审查。请首先审查其正确性；如果完全正确，请简要说明并继续推进 —— 不要对已经是正确的东西做过度冗长和说教式的解释。
+- `CLAUDE-WRITE`：未进行尝试。请直接实现该功能，并按照正常教学模式的深度（见上文）解释其背后的设计推导。
+- `CLAUDE-STUCK`：开发者尝试了但卡住了，或者认为自己的尝试有误。他们的尝试代码会保留在标记下方 —— 请先阅读它。在给出正确的实现代码之余或同时，请**具体指出他们之前的思考路径错在哪里**（而不仅仅是塞给他们一个正确的标准答案）。
 
-If a step has no markers at all (the developer didn't attempt
-anything), fall back to the default teaching-mode behavior described
-above. Not every step needs to go through this attempt-first flow —
-the developer decides per step whether to attempt it themselves,
-based on whether the logic is genuinely new to them or something
-they already have a strong instinct for from prior experience.
+如果某个步骤完全没有包含任何标记（代表开发者没有进行任何尝试），则自动降级到上文所述的默认教学模式行为。并非每个步骤都必须走这个“尝试优先”的流程 —— 开发者会根据逻辑对他们而言是全新概念，还是凭借以往经验已经具备了强烈直觉，来逐个步骤决定是否亲自进行尝试。
 
-> When this project moves from the learning phase into efficiency-
-> first production work, remove the reference to this file from
-> `AGENTS.md` rather than editing this file in place — the rest of
-> the project structure stays unchanged.
+> 当本项目从学习阶段过渡到效率优先的生产环境工作时，请直接从 `AGENTS.md` 中移除对本文件的引用，而无需原地编辑此文件 —— 项目的其他结构保持不变。
