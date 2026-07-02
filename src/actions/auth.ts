@@ -2,7 +2,7 @@
 
 import bcrypt from 'bcryptjs';
 import { AuthError } from 'next-auth';
-import { signIn } from '@/auth';
+import { signIn, signOut } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { registerSchema } from '@/schemas/auth';
 import { isDemoMode } from '@/lib/auth-guards';
@@ -83,7 +83,7 @@ export async function registerAction(
     if (existingUser) {
       return { error: 'An account with this email already exists.', values };
     }
-  
+
     const hashedPassword = await bcrypt.hash(password, 10);
     await prisma.user.create({
       data: { name, email, password: hashedPassword, role: 'USER' },
@@ -91,10 +91,9 @@ export async function registerAction(
   } catch (_e) {
     return {
       error: 'Operation failed. Please try again later.',
-      values
-    }
+      values,
+    };
   }
-
 
   try {
     await signIn('credentials', { email, password, redirectTo: '/dashboard' });
@@ -102,11 +101,18 @@ export async function registerAction(
     if (error instanceof AuthError) {
       return {
         error: 'Account created, but automatic sign-in failed — please log in.',
-        values
+        values,
       };
     }
     throw error; // redirect throw from a successful signIn, must rethrow
   }
 
   return { values };
+}
+
+export async function signOutAction(): Promise<void> {
+  await signOut({
+    redirectTo: '/login',
+    redirect: true,
+  });
 }
