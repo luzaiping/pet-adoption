@@ -58,6 +58,12 @@
 - `registerAction` 与 `submitApplicationAction` 均已在顶部接入演示模式拦截；两者的数据库操作错误会转换为通用 return 文案，不暴露 Prisma 原始错误。
 - `registerAction` 的 `signIn()` 仍保留独立的 `AuthError` 处理；`withdrawApplicationAction`、`approveApplicationAction` 与 `rejectApplicationAction` 继续采用适配 `useMutation` 的 Promise 抛错方式。
 
+### Dashboard 导航
+
+- 已创建 Server Component `DashboardMenu`，在组件内部校验 session，并按 USER 与 ADMIN 两套互不继承的菜单项集合渲染导航；USER 显示“我的申请”，ADMIN 显示“审核队列”。
+- Dashboard 导航采用响应式顶部栏，展示当前用户、角色标识、角色专属入口与退出按钮；移动端会将退出按钮收缩为保留无障碍名称的图标入口。
+- 已创建极简 `signOutAction` 包裹 Auth.js `signOut()`，登出后跳转至公开的 `/login` 页面。
+
 ## 已知问题 / 观察清单
 
 - `/pets` 列表页的代码质量被开发者标记为平庸 —— 功能虽未损坏，但它是后续进行更细致的代码审查走查的候选对象。
@@ -66,11 +72,11 @@
 
 ## 后续步骤（已讨论，尚未开始）
 
-1. **构建 Vercel Cron 路由** —— 用于调用 `resetAndSeedDatabase()`。
-2. **利用 DeepSeek API 实现 AI 宠物简介生成**（需考虑速率限制）。
-3. **最终首页设计走查**（包含 Hero 模块、实时数据统计、推荐宠物、演示模式入口区域） —— 此项已刻意延期。
-4. **构建复杂表单**（宠物创建/编辑） —— 将通过 React Hook Form + Zod + shadcn `Form` 组件实现。
-5. **搭建 Vitest + Testing Library 测试环境**。
-6. **完善 README 架构设计决策章节**、录制演示视频并准备屏幕截图。
-7. **进行移动端响应式适配走查**。
-8. **完成 Vercel 生产部署**。
+1. **最终首页设计走查**（包含 Hero 模块、实时数据统计、推荐宠物、演示模式入口区域）。
+2. **构建复杂表单**（宠物创建/编辑） —— 将通过 React Hook Form + Zod + shadcn `Form` 组件实现。
+3. **进行移动端响应式适配走查**。
+4. **利用 DeepSeek API 实现 AI 宠物简介生成**（需考虑速率限制）。
+5. **构建 Vercel Cron 路由** —— 用于调用 `resetAndSeedDatabase()`。
+6. **搭建 Vitest + Testing Library 测试环境**。
+7. **完成 Vercel 生产部署**。
+8. **完善 README 架构设计决策章节**、录制演示视频并准备屏幕截图。
