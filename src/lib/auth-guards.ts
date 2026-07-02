@@ -30,3 +30,7 @@ export async function assertAdmin(): Promise<AuthenticatedAdmin> {
 
   return { id: admin.id };
 }
+
+export function isDemoMode() {
+  return process.env.IS_DEMO === 'true';
+}

@@ -6,6 +6,7 @@ import { PetStatus, ApplicationStatus } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { applicationSchema } from '@/schemas/applications';
+import { isDemoMode } from '@/lib/auth-guards';
 
 export type ApplicationFormState = {
   message?: string;
@@ -24,6 +25,10 @@ export async function submitApplicationAction(
     redirect(`/login?callbackUrl=${currentPath}`);
   }
 
+  if (isDemoMode()) {
+    return { message: `It is not allowed to submit application in demo mode.`, success: false };
+  }
+
   const message = formData.get('message') as string;
   const parsed = applicationSchema.safeParse({
     message,
@@ -37,45 +42,51 @@ export async function submitApplicationAction(
     };
   }
 
-  const existingPet = await prisma.pet.count({
-    where: { id: petId },
-  });
-
-  if (!existingPet) {
-    return {
-      message: 'Pet does not exist, please check first.',
-      success: false,
-    };
-  }
-
-  const result = await prisma.$transaction(async (tx) => {
-    const canApply = await tx.pet.findFirst({
-      where: {
-        id: petId,
-        status: PetStatus.AVAILABLE,
-        applications: {
-          none: {
-            userId: session?.user.id,
-            status: ApplicationStatus.PENDING,
+  let result = { success: true };
+  try {
+    const existingPet = await prisma.pet.count({
+      where: { id: petId },
+    });
+  
+    if (!existingPet) {
+      return {
+        message: 'Pet does not exist, please check first.',
+        success: false,
+      };
+    }
+  
+    result = await prisma.$transaction(async (tx) => {
+      const canApply = await tx.pet.findFirst({
+        where: {
+          id: petId,
+          status: PetStatus.AVAILABLE,
+          applications: {
+            none: {
+              userId: session?.user.id,
+              status: ApplicationStatus.PENDING,
+            },
           },
         },
-      },
+      });
+  
+      if (!canApply) {
+        return { message: 'Pet is not available.', success: false };
+      }
+  
+      await tx.adoptionApplication.create({
+        data: {
+          message: parsed.data.message,
+          userId: session?.user.id,
+          petId: formData.get('petId') as string,
+        },
+      });
+  
+      return result;
     });
-
-    if (!canApply) {
-      return { message: 'Pet is not available.', success: false };
-    }
-
-    await tx.adoptionApplication.create({
-      data: {
-        message: parsed.data.message,
-        userId: session?.user.id,
-        petId: formData.get('petId') as string,
-      },
-    });
-
-    return { success: true };
-  });
+    
+  } catch (_error) {
+    return { success: false, message: 'Operation failed. Please try again later.' };
+  }
 
   if (result.success) {
     revalidatePath(currentPath);

@@ -5,6 +5,7 @@ import { AuthError } from 'next-auth';
 import { signIn } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { registerSchema } from '@/schemas/auth';
+import { isDemoMode } from '@/lib/auth-guards';
 
 export type LoginFormState = {
   error?: string;
@@ -50,7 +51,7 @@ export async function registerAction(
   _prevState: RegisterFormState,
   formData: FormData,
 ): Promise<RegisterFormState> {
-  if (process.env.IS_DEMO === 'true') {
+  if (isDemoMode()) {
     return { error: 'Registration is disabled in demo mode.', values: {} };
   }
 
@@ -75,18 +76,25 @@ export async function registerAction(
 
   const { name, email, password } = parsed.data;
 
-
-  const existingUser = await prisma.user.findUnique({
-    where: { email },
-  });
-  if (existingUser) {
-    return { error: 'An account with this email already exists.', values };
+  try {
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+    if (existingUser) {
+      return { error: 'An account with this email already exists.', values };
+    }
+  
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await prisma.user.create({
+      data: { name, email, password: hashedPassword, role: 'USER' },
+    });
+  } catch (_e) {
+    return {
+      error: 'Operation failed. Please try again later.',
+      values
+    }
   }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
-  await prisma.user.create({
-    data: { name, email, password: hashedPassword, role: 'USER' },
-  });
 
   try {
     await signIn('credentials', { email, password, redirectTo: '/dashboard' });
