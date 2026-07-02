@@ -52,21 +52,25 @@
 - 已在 dashboard layout 范围挂载 TanStack Query Provider；公开页面不加载该客户端状态依赖。
 - `/dashboard/admin/applications` 已实现完整审核 UI：Server Component 获取初始队列，Client Component 使用 `useMutation` 调用 approve/reject Actions，并提供乐观更新、失败回滚、处理中禁用、Toast、响应式宠物分组卡片、摘要统计和空状态。已通过浏览器渲染验证。
 
+### 演示模式防御
+
+- 已创建返回布尔值的 `isDemoMode()` helper，统一读取 `IS_DEMO` 环境变量。
+- `registerAction` 与 `submitApplicationAction` 均已在顶部接入演示模式拦截；两者的数据库操作错误会转换为通用 return 文案，不暴露 Prisma 原始错误。
+- `registerAction` 的 `signIn()` 仍保留独立的 `AuthError` 处理；`withdrawApplicationAction`、`approveApplicationAction` 与 `rejectApplicationAction` 继续采用适配 `useMutation` 的 Promise 抛错方式。
+
 ## 已知问题 / 观察清单
 
 - `/pets` 列表页的代码质量被开发者标记为平庸 —— 功能虽未损坏，但它是后续进行更细致的代码审查走查的候选对象。
 - 详情页的多图缩略图展示行从未在真实数据下运行过 —— 因为当前的种子数据只为每只宠物分配了一张（主）图片；后续可以考虑为至少一只宠物种子数据分配多张图片。
 - `/login` 仍在使用手写的验证逻辑，而非 Zod —— 导致 `/register` 与 `/login` 的实现风格不一致；此项属于低优先级清理任务。
-- `submitApplicationAction` 尚未调用 `assertNotDemoMode()` —— 意味着在演示模式下领养申请仍能被提交。
 
 ## 后续步骤（已讨论，尚未开始）
 
-1. **编写 `assertNotDemoMode()` 辅助函数** —— 并完成剩余写路径的演示模式拦截（包括 `submitApplicationAction`）。
-2. **构建 Vercel Cron 路由** —— 用于调用 `resetAndSeedDatabase()`。
-3. **利用 DeepSeek API 实现 AI 宠物简介生成**（需考虑速率限制）。
-4. **最终首页设计走查**（包含 Hero 模块、实时数据统计、推荐宠物、演示模式入口区域） —— 此项已刻意延期。
-5. **构建复杂表单**（宠物创建/编辑） —— 将通过 React Hook Form + Zod + shadcn `Form` 组件实现。
-6. **搭建 Vitest + Testing Library 测试环境**。
-7. **完善 README 架构设计决策章节**、录制演示视频并准备屏幕截图。
-8. **进行移动端响应式适配走查**。
-9. **完成 Vercel 生产部署**。
+1. **构建 Vercel Cron 路由** —— 用于调用 `resetAndSeedDatabase()`。
+2. **利用 DeepSeek API 实现 AI 宠物简介生成**（需考虑速率限制）。
+3. **最终首页设计走查**（包含 Hero 模块、实时数据统计、推荐宠物、演示模式入口区域） —— 此项已刻意延期。
+4. **构建复杂表单**（宠物创建/编辑） —— 将通过 React Hook Form + Zod + shadcn `Form` 组件实现。
+5. **搭建 Vitest + Testing Library 测试环境**。
+6. **完善 README 架构设计决策章节**、录制演示视频并准备屏幕截图。
+7. **进行移动端响应式适配走查**。
+8. **完成 Vercel 生产部署**。
