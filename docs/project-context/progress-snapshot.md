@@ -33,14 +33,16 @@
 - 在 `/pets` 和 `/pets/[id]` 页面均加入了 `loading.tsx`（基于 Suspense 的骨架屏，用于应对 Neon 数据库冷启动延迟） —— 已验证其在分页/筛选条件改变时也会短暂触发。
 - 共享组件包括：`pet-card.tsx`、`pet-filters.tsx`、`pagination.tsx`、`status-badge.tsx` —— 后面两个组件采用了通用化设计，预备供未来的管理员宠物页面复用。
 
-### 领养申请提交
+### 领养申请提交与用户申请历史
 
-- 将 `ApplicationStatus.WITHDRAWN` 引入至 Prisma 枚举并执行了迁移（目前仅包含枚举修改 —— 撤销 UI 和 Action 尚未构建）。
+- 将 `ApplicationStatus.WITHDRAWN` 引入至 Prisma 枚举并执行了迁移；撤回 Action 与用户侧入口均已接入。
 - `schemas/applications.ts` —— 包含可选的留言字段，通过 Zod 限制最大 300 字符。
 - `src/lib/applications.ts` —— 编写了 `getPendingPetApplicationByUserId()` 函数。
 - `actions/applications.ts` —— 编写了 `submitApplicationAction`（使用 `useActionState`）：未认证用户 → 重定向至 `/login?callbackUrl=/pets/{id}`；校验宠物是否存在且状态为 `AVAILABLE`；在事务（Transaction）内部阻止同一用户对同一宠物重复提交 `PENDING` 申请（未采用部分唯一索引）；该操作**不**改变 `Pet.status`；成功后执行 `revalidatePath` 并保持在原页面（弹出 Toast 提示，不执行重定向）。
 - 支持多名用户同时针对同一只宠物提交申请；每名用户对同一只宠物同时只能拥有一个活跃的 `PENDING` 申请（作用域相关疑问已解决 —— 见 `architecture-decisions.md` 第 14 条）。
 - `/pets/[id]` 页面上的 `ApplicationPanel` —— 采用了可展开的内联表单（而非对话框弹窗），包含申请处理中状态卡片，并对接了 sonner 的成功/错误 Toast 提示。
+- `/dashboard/applications` 已完成：Server Component 显式校验 session，数据层按当前 `userId` 查询全部申请历史及宠物主图，Client Component 使用 TanStack Query mutation 调用撤回 Action；业务失败进入 `onError`，成功后通过 `router.refresh()` 使用服务端真实数据更新状态。页面包含申请摘要、响应式宠物卡片、详情链接、日期与留言、单条撤回 loading 及空状态，已通过 lint、类型检查和 production build。
+- 共享 `StatusBadge` 已扩展为类型安全的 `PetStatus | ApplicationStatus` 联合状态组件，并为 Available/Approved、Pending、Rejected、Adopted/Withdrawn 提供对应的成功、警告、危险和中性视觉语义。
 
 ### 管理员审核队列
 
@@ -56,7 +58,6 @@
 - 详情页的多图缩略图展示行从未在真实数据下运行过 —— 因为当前的种子数据只为每只宠物分配了一张（主）图片；后续可以考虑为至少一只宠物种子数据分配多张图片。
 - `/login` 仍在使用手写的验证逻辑，而非 Zod —— 导致 `/register` 与 `/login` 的实现风格不一致；此项属于低优先级清理任务。
 - `submitApplicationAction` 尚未调用 `assertNotDemoMode()` —— 意味着在演示模式下领养申请仍能被提交。
-- 领养申请撤销流程尚未实现 —— 当前已存在 `WITHDRAWN` 枚举值，已编写撤销的 Server Action，但还没构建相应的 UI，计划在 User dashboard 里添加入口。
 
 ## 后续步骤（已讨论，尚未开始）
 

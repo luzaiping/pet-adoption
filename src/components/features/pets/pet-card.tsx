@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Pet, PetImage } from '@prisma/client';
 
 import { Card, CardContent } from '@/components/ui/card';
-import { StatusBadge } from '@/components/features/pets/status-badge';
+import { StatusBadge } from '@/components/shared/status-badge';
 
 type PetCardProps = {
   pet: Pet & {

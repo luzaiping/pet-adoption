@@ -7,10 +7,10 @@ import { ApplicationStatus, PetStatus } from '@prisma/client';
 export async function approveApplicationAction(
   applicationId: string,
   petId: string,
-): Promise<boolean> {
+): Promise<void> {
   const user = await assertAdmin();
 
-  const result = await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx) => {
     const reviewedAt = new Date();
 
     await tx.adoptionApplication.updateMany({
@@ -47,11 +47,7 @@ export async function approveApplicationAction(
         id: petId,
       },
     });
-
-    return true;
   });
-
-  return result;
 }
 
 export async function rejectApplicationAction(

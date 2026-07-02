@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { getPetById } from '@/lib/pets';
-import { StatusBadge } from '@/components/features/pets/status-badge';
+import { StatusBadge } from '@/components/shared/status-badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { PetStatus } from '@prisma/client';
 import { getPendingPetApplicationByUserId } from '@/lib/applications';

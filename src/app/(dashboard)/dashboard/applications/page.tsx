@@ -1,8 +1,19 @@
-export default function MyApplicationsPage() {
+// CLAUDE-REVIEW
+
+import { auth } from '@/auth';
+import { getUserApplications } from '@/lib/applications';
+import { redirect } from 'next/navigation';
+import { ApplicationList } from '@/components/features/applications/application-list';
+
+export default async function MyApplicationsPage() {
+  const session = await auth();
+  if (!session?.user) {
+    redirect('/login');
+  }
+  const applications = await getUserApplications(session.user.id);
   return (
     <main>
-      <h1>My Applications</h1>
-      {/* TODO: list current user's submitted adoption applications */}
+      <ApplicationList applications={applications} />
     </main>
   );
 }
