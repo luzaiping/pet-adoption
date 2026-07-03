@@ -6,6 +6,7 @@ import { signOutAction } from '@/actions/auth';
 import { auth } from '@/auth';
 import { Button } from '@/components/ui/button';
 import { isDemoMode } from '@/lib/auth-guards';
+import { SwitchUser } from '@/components/features/navigation/switch-user';
 
 const ROLE_LABELS: Record<Role, string> = {
   [Role.USER]: 'Adopter',
@@ -48,29 +49,7 @@ export async function PublicHeader() {
           </nav>
         </div>
 
-        {demoMode && (
-          <div
-            className="order-3 grid w-full grid-cols-2 gap-2 border-t pt-3 lg:order-none lg:flex lg:w-auto lg:border-0 lg:pt-0"
-            aria-label="Demo account options"
-          >
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              disabled={role === Role.USER}
-            >
-              {role === Role.USER ? 'Adopter: Current' : 'Try as Adopter'}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={role === Role.ADMIN}
-            >
-              {role === Role.ADMIN ? 'Admin: Current' : 'Try as Admin'}
-            </Button>
-          </div>
-        )}
+        {demoMode && <SwitchUser currentRole={role} />}
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
           {user && role ? (

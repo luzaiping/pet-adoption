@@ -6,6 +6,12 @@ import { signIn, signOut } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { registerSchema } from '@/schemas/auth';
 import { isDemoMode } from '@/lib/auth-guards';
+import { Role } from '@prisma/client';
+import {
+  DEMO_PASSWORD,
+  DEMO_ADMIN_EMAIL,
+  DEMO_ADOPTER_EMAIL,
+} from '@/lib/seed-data';
 
 export type LoginFormState = {
   error?: string;
@@ -115,4 +121,46 @@ export async function signOutAction(): Promise<void> {
     redirectTo: '/login',
     redirect: true,
   });
+}
+
+export type SwitchUserState = {
+  success: boolean;
+  message?: string;
+};
+
+export async function switchUserAction(
+  _prevState: SwitchUserState,
+  formData: FormData,
+): Promise<SwitchUserState> {
+  const role = formData.get('role');
+  if (role !== Role.ADMIN && role !== Role.USER) {
+    return { success: false, message: 'Invalid role, please check again.' };
+  }
+
+  if (!isDemoMode()) {
+    return {
+      success: false,
+      message: `Operation is only allowed in demo mode.`,
+    };
+  }
+
+  try {
+    await signIn('credentials', {
+      email: role === Role.ADMIN ? DEMO_ADMIN_EMAIL : DEMO_ADOPTER_EMAIL,
+      password: DEMO_PASSWORD,
+      redirect: false,
+    });
+  } catch (error) {
+    if (error instanceof AuthError) {
+      switch (error.type) {
+        default:
+          return {
+            success: false,
+            message: 'Something went wrong. Please try again.',
+          };
+      }
+    }
+    throw error;
+  }
+  return { success: true };
 }
