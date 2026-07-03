@@ -75,7 +75,8 @@
 ### 公共 Header
 
 - 已为 `(public)` 路由组新增公共 Header：包含品牌、宠物浏览入口，并根据会话状态展示登录/注册或当前用户、角色、Dashboard 与退出入口。
-- Header 根据 `IS_DEMO` 控制体验入口展示：演示模式下隐藏不可用的注册入口并显示 `Try as Adopter` / `Try as Admin`；当前身份会标记为 `Current`。体验按钮目前仅完成 UI，自动登录与账号切换流程待下一子步骤接入。
+- Header 根据 `IS_DEMO` 控制体验入口展示：演示模式下隐藏不可用的注册入口并显示 `Try as Adopter` / `Try as Admin`；当前身份会标记为 `Current`。
+- `SwitchUser` 已接入 `switchUserAction`：两个入口分别提交受限的目标角色，由服务端映射到固定种子账号并通过 Auth.js Credentials 登录；支持未登录时快速体验及已登录时直接覆盖当前 JWT 切换身份。请求期间只在目标按钮显示 loading，并禁用两个入口以防重复提交；错误通过 Toast 展示，成功后刷新当前页面会话 UI。
 - 已完成桌面端与 390px 移动端浏览器验证；移动端将体验入口放入独立双列区域，并确保页面没有横向溢出。
 
 ## 已知问题 / 观察清单

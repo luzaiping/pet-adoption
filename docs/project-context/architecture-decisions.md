@@ -116,6 +116,11 @@ USER 当前只有“我的申请”一个目标页面，额外菜单没有信息
 ### 21. `/dashboard/admin` 定位为轻量管理工作台
 Admin Overview 是可返回、可导航的真实页面，而不是自动跳转入口。首版只包含欢迎区以及由配置数组映射生成的 Review Applications、Manage Pets 两个 Quick Actions，不查询统计数据，也不复制审核队列或宠物列表的业务内容。该结构为未来增加其他管理模块或统计摘要保留扩展空间，同时避免在功能尚未完整时提前引入额外数据库查询。
 
+### 22. 演示账号切换复用 Credentials 登录，不建立特殊会话通道
+公共 Header 的 `Try as Adopter` / `Try as Admin` 入口只提交 `USER` / `ADMIN` 两种受限目标角色，不接受客户端传入任意邮箱或密码。`switchUserAction` 必须再次检查 `isDemoMode()`，再由服务端将目标角色映射到 `seed-data.ts` 中的固定演示账号凭据，并复用现有 Auth.js Credentials Provider 完成认证；非演示环境或非法角色均直接返回业务错误。这样演示登录仍经过与普通登录相同的密码校验、JWT 回调和 Session 回调，不引入绕过认证流程的特殊 Token 生成路径。
+
+从一个演示身份切换到另一个身份时不先执行 `signOut()`：新一次成功登录会直接覆盖当前 JWT Cookie，避免“退出已成功但新登录失败”导致会话意外丢失。该 Action 使用 `redirect: false` 将结果返回 `useActionState`，再由客户端 `router.refresh()` 刷新当前页面中的 Server Component 会话视图，因此用户停留在原公共页面，而不是统一跳转到 Dashboard。
+
 ---
 
 ## 已拒绝 / 已移除的方案
