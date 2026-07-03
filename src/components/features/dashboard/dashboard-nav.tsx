@@ -14,18 +14,21 @@ const adminMenuItems = [
   {
     href: '/dashboard/admin',
     label: 'Overview',
+    shortLabel: 'Overview',
     icon: ClipboardList,
     matchSubPath: false,
   },
   {
     href: '/dashboard/admin/applications',
     label: 'Applications Queue',
+    shortLabel: 'Queue',
     icon: ShieldCheck,
     matchSubPath: true,
   },
   {
     href: '/dashboard/admin/pets',
     label: 'Pet Management',
+    shortLabel: 'Pets',
     icon: ShieldCheck,
     matchSubPath: true,
   },
@@ -39,26 +42,29 @@ export default function DashboardNav({ role }: Props) {
   return (
     menuItems.length > 0 && (
       <nav aria-label="Dashboard navigation" className="flex gap-2">
-        {menuItems.map(({ href, label, icon: Icon, matchSubPath }) => {
-          const hasPathMatched =
-            path === href || (matchSubPath && path.startsWith(`${href}/`));
-          return (
-            <Button
-              key={href}
-              asChild
-              variant={hasPathMatched ? 'link' : 'ghost'}
-              className="justify-start"
-            >
-              <Link
-                href={href}
-                aria-current={hasPathMatched ? 'page' : undefined}
+        {menuItems.map(
+          ({ href, label, shortLabel, icon: Icon, matchSubPath }) => {
+            const hasPathMatched =
+              path === href || (matchSubPath && path.startsWith(`${href}/`));
+            return (
+              <Button
+                key={href}
+                asChild
+                variant={hasPathMatched ? 'link' : 'ghost'}
+                className="justify-start"
               >
-                <Icon aria-hidden="true" />
-                {label}
-              </Link>
-            </Button>
-          );
-        })}
+                <Link
+                  href={href}
+                  aria-current={hasPathMatched ? 'page' : undefined}
+                >
+                  <Icon aria-hidden="true" />
+                  <span className="sm:hidden">{shortLabel}</span>
+                  <span className="hidden sm:inline">{label}</span>
+                </Link>
+              </Button>
+            );
+          },
+        )}
       </nav>
     )
   );
