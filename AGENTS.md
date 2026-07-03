@@ -23,6 +23,7 @@ Before starting any task, read the following files in `docs/project-context/`:
   interaction style for this project (small steps, explain code,
   confirm before proceeding). If it's absent, default to normal
   efficiency-first behavior.
+- `role.md` — If this file exists, it defines your role, responsibilities, and expected workflow. Follow the instructions and workflow defined in it strictly.
 
 ## Maintaining docs/project-context/
 
@@ -36,4 +37,6 @@ After completing a feature or sub-task:
   Leave it untouched otherwise.
 - Commit documentation updates in a separate commit from code
   changes, so code diffs stay clean.
+
+  
 <!-- END:project-context -->

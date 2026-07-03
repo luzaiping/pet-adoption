@@ -60,9 +60,17 @@
 
 ### Dashboard 导航
 
-- 已创建 Server Component `DashboardMenu`，在组件内部校验 session，并按 USER 与 ADMIN 两套互不继承的菜单项集合渲染导航；USER 显示“我的申请”，ADMIN 显示“审核队列”。
-- Dashboard 导航采用响应式顶部栏，展示当前用户、角色标识、角色专属入口与退出按钮；移动端会将退出按钮收缩为保留无障碍名称的图标入口。
+- `/dashboard` 已改为服务端角色分发入口：USER 跳转至“我的申请”，ADMIN 跳转至 Admin Overview，STAFF 跳转至 Forbidden，未登录用户跳转至登录页。
+- 已创建 Server Component `DashboardMenu`，在组件内部校验 session；USER 仅显示 Header，ADMIN 显示 Overview、Applications Queue、Pet Management 三项独立导航。品牌统一链接公开首页 `/`。
+- 路径高亮隔离在使用 `usePathname()` 的 Client Component `DashboardNav` 中：Overview 精确匹配，审核队列与宠物管理支持子路径匹配，并通过 `aria-current` 标记当前页面。
+- Dashboard Header 展示当前用户、角色标识与退出入口；移动端会缩短菜单文案并将退出按钮收缩为保留无障碍名称的图标入口，390px 视口下无横向溢出。
 - 已创建极简 `signOutAction` 包裹 Auth.js `signOut()`，登出后跳转至公开的 `/login` 页面。
+
+### Admin Overview
+
+- `/dashboard/admin` 已实现为轻量管理工作台，包含欢迎区以及 Review Applications、Manage Pets 两个 Quick Actions。
+- Quick Actions 由配置数组映射生成，能够扩展更多管理入口；页面保持纯 Server Component，不查询统计数据或复制子页面业务内容。
+- 页面已通过桌面端和 390px 移动端浏览器验证；卡片在移动端单列排列且内容无横向溢出。
 
 ## 已知问题 / 观察清单
 
