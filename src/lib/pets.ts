@@ -59,3 +59,29 @@ export async function getPetById(id: string) {
 }
 
 export { PAGE_SIZE };
+
+export async function getDistinctSpecies() {
+  const rows = await prisma.pet.findMany({
+    distinct: ['species'],
+    select: {
+      species: true,
+    },
+    orderBy: {
+      createdAt: 'asc',
+    },
+  });
+  return rows.map((row) => row.species);
+}
+
+export async function getSheltersForSelect() {
+  const rows = await prisma.shelter.findMany({
+    select: {
+      id: true,
+      name: true,
+    },
+    orderBy: {
+      createdAt: 'asc',
+    },
+  });
+  return rows;
+}
