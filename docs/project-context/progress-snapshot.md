@@ -72,6 +72,13 @@
 - Quick Actions 由配置数组映射生成，能够扩展更多管理入口；页面保持纯 Server Component，不查询统计数据或复制子页面业务内容。
 - 页面已通过桌面端和 390px 移动端浏览器验证；卡片在移动端单列排列且内容无横向溢出。
 
+### 管理员宠物创建/编辑（进行中）
+
+- 已创建宠物 create/update Zod schema、真实 species/shelter 下拉查询，以及受 `assertAdmin()` 保护的 create/update Server Actions；create 路径显式强制写入 `AVAILABLE`，当前图片暂时使用固定静态图片。
+- 已创建 `/dashboard/admin/pets/new` 与 `/dashboard/admin/pets/[id]/edit` 路由，并共用 `PetForm`。表单采用 React Hook Form + Zod resolver，包含 name、species、breed、age、gender、shelter、description，以及仅 edit 模式显示的 status。
+- species 使用允许自由输入的 Combobox，并复用数据库 distinct species 作为建议项；shelter、gender 和 status 使用 Select。Server Action 返回的字段错误会通过 RHF `setError()` 映射回对应字段。
+- 已通过 TypeScript、ESLint 和 production build；尚未进行浏览器交互验证，管理列表与提交成功后的页面流转仍待后续子步骤完成。
+
 ### 公共 Header
 
 - 已为 `(public)` 路由组新增公共 Header：包含品牌、宠物浏览入口，并根据会话状态展示登录/注册或当前用户、角色、Dashboard 与退出入口。
@@ -100,11 +107,10 @@
 
 ## 后续步骤（已讨论，尚未开始）
 
-1. **最终首页设计走查**（包含 Hero 模块、实时数据统计、推荐宠物、演示模式入口区域）。
-2. **构建复杂表单**（宠物创建/编辑） —— 将通过 React Hook Form + Zod + shadcn `Form` 组件实现。
-3. **进行移动端响应式适配走查**。
-4. **利用 DeepSeek API 实现 AI 宠物简介生成**（需考虑速率限制）。
-5. **构建 Vercel Cron 路由** —— 用于调用 `resetAndSeedDatabase()`。
-6. **搭建 Vitest + Testing Library 测试环境**。
-7. **完成 Vercel 生产部署**。
-8. **完善 README 架构设计决策章节**、录制演示视频并准备屏幕截图。
+1. **完成管理员宠物管理** —— 浏览器验证创建/编辑表单，补充提交成功后的页面流转，并接入宠物管理列表入口。
+2. **进行移动端响应式适配走查**。
+3. **利用 DeepSeek API 实现 AI 宠物简介生成**（需考虑速率限制）。
+4. **构建 Vercel Cron 路由** —— 用于调用 `resetAndSeedDatabase()`。
+5. **搭建 Vitest + Testing Library 测试环境**。
+6. **完成 Vercel 生产部署**。
+7. **完善 README 架构设计决策章节**、录制演示视频并准备屏幕截图。
