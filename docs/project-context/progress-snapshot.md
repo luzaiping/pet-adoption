@@ -74,10 +74,13 @@
 
 ### 管理员宠物创建/编辑（进行中）
 
-- 已创建宠物 create/update Zod schema、真实 species/shelter 下拉查询，以及受 `assertAdmin()` 保护的 create/update Server Actions；create 路径显式强制写入 `AVAILABLE`，当前图片暂时使用固定静态图片。
+- 已创建宠物 create/update Zod schema、真实 species/shelter 下拉查询，以及受 `assertAdmin()` 保护的 create/update Server Actions；create 路径显式强制写入 `AVAILABLE`。
 - 已创建 `/dashboard/admin/pets/new` 与 `/dashboard/admin/pets/[id]/edit` 路由，并共用 `PetForm`。表单采用 React Hook Form + Zod resolver，包含 name、species、breed、age、gender、shelter、description，以及仅 edit 模式显示的 status。
 - species 使用允许自由输入的 Combobox，并复用数据库 distinct species 作为建议项；shelter、gender 和 status 使用 Select。Server Action 返回的字段错误会通过 RHF `setError()` 映射回对应字段。
-- 已通过 TypeScript、ESLint 和 production build；尚未进行浏览器交互验证，管理列表与提交成功后的页面流转仍待后续子步骤完成。
+- 已接入静态单图选择器：species 为空时保持空图片；Dog/Cat 通过分页 Dialog 分别选择 15 张对应图片，主表单只回显当前图片；其他非空物种自动使用通用图片。切换 species 时会清除不再合法的旧选择。Zod 同时校验图片白名单和 species/图片池对应关系；create 写入所选主图，update 原子替换旧图片并保持单图。
+- create/edit 页面已改为居中的宽内容布局，桌面端采用双列字段区与独立图片侧栏，移动端回落为单栏；页面包含明确标题、说明和返回入口。
+- 表单必填字段已使用统一的可见 `*` 与屏幕阅读器文本标识。创建/编辑成功后会显示 Toast 并跳转至宠物管理列表；Server Action 同时失效 admin 列表、公共宠物列表、首页和对应宠物详情路径，确保后续导航读取最新数据。
+- 已通过 TypeScript、ESLint、schema 图片组合测试和 production build；本地浏览器请求因当前环境无法连接 Neon，在 Server Component 数据查询阶段返回 500，因此新版布局、图片 Dialog 和提交成功流程尚未完成真实浏览器验证。宠物管理列表本身仍待后续子步骤完成。
 
 ### 公共 Header
 
