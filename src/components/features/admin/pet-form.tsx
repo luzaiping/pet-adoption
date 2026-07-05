@@ -2,7 +2,7 @@
 
 'use client';
 
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { Input } from '@/components/ui/input';
@@ -32,7 +32,6 @@ import {
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -81,7 +80,7 @@ export function PetForm({
     resolver: zodResolver(formSchema),
     defaultValues,
   });
-  const species = form.watch('species');
+  const species = useWatch({ control: form.control, name: 'species' });
 
   async function onSubmit(values: UpdatePetForm | CreatePetForm) {
     let result: PetActionResult;
@@ -90,7 +89,7 @@ export function PetForm({
     } else {
       result = await updatePetAction(values as UpdatePetForm);
     }
-
+    
     if (!result.success) {
       if (result.fieldErrors) {
         for (const [fieldName, errors] of Object.entries(
@@ -114,118 +113,101 @@ export function PetForm({
   }
 
   return (
-    <Card className="w-full sm:max-w-2xl">
-      <CardHeader>
-        <CardTitle>{isEditMode ? 'Edit pet' : 'Create pet'}</CardTitle>
-        <CardDescription>
-          {isEditMode
-            ? 'Update the pet profile and adoption status.'
-            : 'Add a pet to the adoption catalog.'}
-        </CardDescription>
+    <Card className="w-full overflow-hidden border-border/80 shadow-sm">
+      <CardHeader className="border-b bg-muted/20 px-6 py-5 sm:px-8">
+        <CardTitle className="text-xl">Pet details</CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Fields marked as required must be completed before saving.
+        </p>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-6 py-7 sm:px-8">
         <form id="pet-form" onSubmit={form.handleSubmit(onSubmit)}>
-          <FieldGroup>
-            <Controller
-              name="name"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="pet-name">Name</FieldLabel>
-                  <Input
-                    {...field}
-                    id="pet-name"
-                    aria-invalid={fieldState.invalid}
-                    placeholder="e.g. Luna"
-                    autoComplete="off"
-                  />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+            <FieldGroup>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Controller
+                  name="name"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="pet-name">Name</FieldLabel>
+                      <Input
+                        {...field}
+                        id="pet-name"
+                        aria-invalid={fieldState.invalid}
+                        placeholder="e.g. Luna"
+                        autoComplete="off"
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
                   )}
-                </Field>
-              )}
-            />
-            <Controller
-              name="species"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="pet-species">Species</FieldLabel>
-                  <Combobox
-                    items={speciesList}
-                    value={field.value || null}
-                    inputValue={field.value}
-                    onInputValueChange={(value) => field.onChange(value)}
-                    onValueChange={(value) => field.onChange(value ?? '')}
-                  >
-                    <ComboboxInput
-                      id="pet-species"
-                      ref={field.ref}
-                      onBlur={field.onBlur}
-                      placeholder="Select or enter a species"
-                      aria-invalid={fieldState.invalid}
-                      showClear
-                    />
-                    <ComboboxContent>
-                      <ComboboxEmpty>
-                        Enter a new species to add it.
-                      </ComboboxEmpty>
-                      <ComboboxList>
-                        {speciesList.map((species) => (
-                          <ComboboxItem key={species} value={species}>
-                            {species}
-                          </ComboboxItem>
-                        ))}
-                      </ComboboxList>
-                    </ComboboxContent>
-                  </Combobox>
-                  <FieldDescription>
-                    Choose an existing species or type a new one.
-                  </FieldDescription>
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
+                />
+                <Controller
+                  name="species"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="pet-species">Species</FieldLabel>
+                      <Combobox
+                        items={speciesList}
+                        value={field.value || null}
+                        inputValue={field.value}
+                        onInputValueChange={(value) => field.onChange(value)}
+                        onValueChange={(value) => field.onChange(value ?? '')}
+                      >
+                        <ComboboxInput
+                          id="pet-species"
+                          ref={field.ref}
+                          onBlur={field.onBlur}
+                          placeholder="Select or enter a species"
+                          aria-invalid={fieldState.invalid}
+                          className="w-full"
+                          showClear
+                        />
+                        <ComboboxContent>
+                          <ComboboxEmpty>
+                            Enter a new species to add it.
+                          </ComboboxEmpty>
+                          <ComboboxList>
+                            {speciesList.map((species) => (
+                              <ComboboxItem key={species} value={species}>
+                                {species}
+                              </ComboboxItem>
+                            ))}
+                          </ComboboxList>
+                        </ComboboxContent>
+                      </Combobox>
+                      <FieldDescription>
+                        Select an existing species or enter a new one.
+                      </FieldDescription>
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
                   )}
-                </Field>
-              )}
-            />
-            <Controller
-              name="breed"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="pet-breed">Breed</FieldLabel>
-                  <Input
-                    {...field}
-                    value={field.value ?? ''}
-                    id="pet-breed"
-                    aria-invalid={fieldState.invalid}
-                    placeholder="e.g. Labrador Retriever"
-                    autoComplete="off"
-                  />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
+                />
+                <Controller
+                  name="breed"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="pet-breed">Breed</FieldLabel>
+                      <Input
+                        {...field}
+                        value={field.value ?? ''}
+                        id="pet-breed"
+                        aria-invalid={fieldState.invalid}
+                        placeholder="e.g. Labrador Retriever"
+                        autoComplete="off"
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
                   )}
-                </Field>
-              )}
-            />
-            <Controller
-              name="image"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Image</FieldLabel>
-                  <PetImagePicker
-                    species={species}
-                    value={field.value}
-                    onChange={field.onChange}
-                    invalid={fieldState.invalid}
-                  />
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
+                />
             <Controller
               name="age"
               control={form.control}
@@ -349,6 +331,7 @@ export function PetForm({
                 )}
               />
             )}
+              </div>
             <Controller
               name="description"
               control={form.control}
@@ -380,7 +363,35 @@ export function PetForm({
                 </Field>
               )}
             />
-          </FieldGroup>
+            </FieldGroup>
+
+            <Controller
+              name="image"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field
+                  data-invalid={fieldState.invalid}
+                  className="lg:sticky lg:top-24"
+                >
+                  <div className="space-y-1">
+                    <FieldLabel>Profile image</FieldLabel>
+                    <FieldDescription>
+                      The primary image shown throughout the adoption catalog.
+                    </FieldDescription>
+                  </div>
+                  <PetImagePicker
+                    species={species}
+                    value={field.value}
+                    onChange={field.onChange}
+                    invalid={fieldState.invalid}
+                  />
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+          </div>
 
           {form.formState.errors.root && (
             <Field data-invalid>
@@ -389,8 +400,8 @@ export function PetForm({
           )}
         </form>
       </CardContent>
-      <CardFooter>
-        <Field orientation="horizontal">
+      <CardFooter className="justify-end border-t bg-muted/20 px-6 py-5 sm:px-8">
+        <Field orientation="horizontal" className="flex-none">
           <Button type="button" variant="outline" onClick={() => form.reset()}>
             Reset
           </Button>

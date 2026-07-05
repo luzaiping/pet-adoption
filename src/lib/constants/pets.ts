@@ -15,6 +15,8 @@ const createPetImagePaths = (species: 'dog' | 'cat') =>
 export const DOG_PET_IMAGE_PATHS = createPetImagePaths('dog');
 export const CAT_PET_IMAGE_PATHS = createPetImagePaths('cat');
 export const COMMON_PET_IMAGE_PATH = '/pets/common.jpg';
+const COMMON_PET_IMAGE_PATHS = [COMMON_PET_IMAGE_PATH];
+const EMPTY_PET_IMAGE_PATHS: string[] = [];
 export const PET_IMAGE_PATHS = [
   ...DOG_PET_IMAGE_PATHS,
   ...CAT_PET_IMAGE_PATHS,
@@ -30,6 +32,10 @@ export function normalizePetSpecies(value: string) {
 }
 
 export function getPetImagePathsForSpecies(species: string) {
+  if (!species) {
+    return EMPTY_PET_IMAGE_PATHS;
+  }
+
   if (species === SPECIES_DOG) {
     return DOG_PET_IMAGE_PATHS;
   }
@@ -38,7 +44,7 @@ export function getPetImagePathsForSpecies(species: string) {
     return CAT_PET_IMAGE_PATHS;
   }
 
-  return [COMMON_PET_IMAGE_PATH];
+  return COMMON_PET_IMAGE_PATHS;
 }
 
 export const Mode = {
