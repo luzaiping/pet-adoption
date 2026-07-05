@@ -45,18 +45,17 @@ export async function createPetAction(
   }
 
   try {
+    const { image, ...petData } = parsedResult.data;
+
     await prisma.pet.create({
       data: {
-        ...parsedResult.data,
+        ...petData,
         status: PetStatus.AVAILABLE,
-        // TODO specify default images. need to update while image picker is supported.
         images: {
-          create: [
-            {
-              url: '/pets/cat-01.jpg',
-              isPrimary: true,
-            },
-          ],
+          create: {
+            url: image,
+            isPrimary: true,
+          },
         },
       },
     });
@@ -93,7 +92,7 @@ export async function updatePetAction(
     };
   }
 
-  const { id, ...data } = parsedResult.data;
+  const { id, image, ...data } = parsedResult.data;
 
   try {
     await prisma.pet.update({
@@ -101,16 +100,14 @@ export async function updatePetAction(
         id,
       },
       data: {
-        ...data
-        // TODO specify default images. need to update while image picker is supported.
-        // images: {
-        //   create: [
-        //     {
-        //       url: '/pets/cat-01.jpg',
-        //       isPrimary: true,
-        //     },
-        //   ],
-        // },
+        ...data,
+        images: {
+          deleteMany: {},
+          create: {
+            url: image,
+            isPrimary: true,
+          },
+        },
       },
     });
   } catch (_error) {

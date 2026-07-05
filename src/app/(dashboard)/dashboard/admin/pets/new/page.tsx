@@ -8,6 +8,7 @@ import {
 } from '@/lib/pets';
 import { CreatePetForm } from '@/schemas/pets';
 import { PetGender } from '@prisma/client';
+import { COMMON_PET_IMAGE_PATH } from '@/lib/constants/pets';
 
 const defaultValues: CreatePetForm = {
   name: '',
@@ -17,6 +18,7 @@ const defaultValues: CreatePetForm = {
   gender: PetGender.UNKNOWN,
   description: undefined,
   shelterId: '',
+  image: COMMON_PET_IMAGE_PATH,
 };
 
 export default async function AdminPetCreatePage() {

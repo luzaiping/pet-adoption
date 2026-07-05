@@ -1,13 +1,17 @@
 import { z } from 'zod';
 import { PetGender, PetStatus } from '@prisma/client';
+import {
+  getPetImagePathsForSpecies,
+  normalizePetSpecies,
+  PET_IMAGE_PATHS,
+} from '@/lib/constants/pets';
 
-// TODO, need to uncomment when image picker is supported.
-// const petImageSchema = z.object({
-//   url: z.string(),
-//   isPrimary: z.boolean().default(false),
-// });
+const petImageSchema = z.string().refine(
+  (imagePath) => PET_IMAGE_PATHS.includes(imagePath),
+  'Please select a valid pet image.',
+);
 
-export const createPetSchema = z.object({
+const petFieldsSchema = z.object({
   name: z
     .string()
     .trim()
@@ -17,7 +21,7 @@ export const createPetSchema = z.object({
     .string()
     .trim()
     .min(1, 'Species is required.')
-    .transform((s) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()),
+    .transform(normalizePetSpecies),
   breed: z
     .string()
     .trim()
@@ -36,14 +40,34 @@ export const createPetSchema = z.object({
     .max(500, 'Description must be at most 500 characters')
     .optional(),
   shelterId: z.string().min(1, 'Please select shelter.'),
-  // TODO, need to uncomment when image picker is supported.
-  // images: z.array(petImageSchema).min(1, 'Please select pet image.')
+  image: petImageSchema,
 });
 
-export const updatePetSchema = createPetSchema.extend({
-  id: z.string(),
-  status: z.enum(PetStatus),
-});
+function validateImageMatchesSpecies(
+  values: { species: string; image: string },
+  context: z.RefinementCtx,
+) {
+  const allowedImages = getPetImagePathsForSpecies(values.species);
+
+  if (!allowedImages.includes(values.image)) {
+    context.addIssue({
+      code: 'custom',
+      path: ['image'],
+      message: 'Please select an image that matches the pet species.',
+    });
+  }
+}
+
+export const createPetSchema = petFieldsSchema.superRefine(
+  validateImageMatchesSpecies,
+);
+
+export const updatePetSchema = petFieldsSchema
+  .extend({
+    id: z.string(),
+    status: z.enum(PetStatus),
+  })
+  .superRefine(validateImageMatchesSpecies);
 
 export type CreatePetForm = z.infer<typeof createPetSchema>;
 

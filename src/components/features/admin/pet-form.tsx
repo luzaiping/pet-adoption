@@ -59,6 +59,7 @@ import {
   InputGroupTextarea,
 } from '@/components/ui/input-group';
 import { PetGender, PetStatus } from '@prisma/client';
+import { PetImagePicker } from '@/components/features/pets/pet-image-picker';
 
 type Props = {
   mode: Mode;
@@ -80,6 +81,7 @@ export function PetForm({
     resolver: zodResolver(formSchema),
     defaultValues,
   });
+  const species = form.watch('species');
 
   async function onSubmit(values: UpdatePetForm | CreatePetForm) {
     let result: PetActionResult;
@@ -199,6 +201,24 @@ export function PetForm({
                     aria-invalid={fieldState.invalid}
                     placeholder="e.g. Labrador Retriever"
                     autoComplete="off"
+                  />
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+            <Controller
+              name="image"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel>Image</FieldLabel>
+                  <PetImagePicker
+                    species={species}
+                    value={field.value}
+                    onChange={field.onChange}
+                    invalid={fieldState.invalid}
                   />
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
