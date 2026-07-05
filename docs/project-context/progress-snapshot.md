@@ -72,7 +72,7 @@
 - Quick Actions 由配置数组映射生成，能够扩展更多管理入口；页面保持纯 Server Component，不查询统计数据或复制子页面业务内容。
 - 页面已通过桌面端和 390px 移动端浏览器验证；卡片在移动端单列排列且内容无横向溢出。
 
-### 管理员宠物创建/编辑（进行中）
+### 管理员宠物管理
 
 - 已创建宠物 create/update Zod schema、真实 species/shelter 下拉查询，以及受 `assertAdmin()` 保护的 create/update Server Actions；create 路径显式强制写入 `AVAILABLE`。
 - 已创建 `/dashboard/admin/pets/new` 与 `/dashboard/admin/pets/[id]/edit` 路由，并共用 `PetForm`。表单采用 React Hook Form + Zod resolver，包含 name、species、breed、age、gender、shelter、description，以及仅 edit 模式显示的 status。
@@ -80,7 +80,11 @@
 - 已接入静态单图选择器：species 为空时保持空图片；Dog/Cat 通过分页 Dialog 分别选择 15 张对应图片，主表单只回显当前图片；其他非空物种自动使用通用图片。切换 species 时会清除不再合法的旧选择。Zod 同时校验图片白名单和 species/图片池对应关系；create 写入所选主图，update 原子替换旧图片并保持单图。
 - create/edit 页面已改为居中的宽内容布局，桌面端采用双列字段区与独立图片侧栏，移动端回落为单栏；页面包含明确标题、说明和返回入口。
 - 表单必填字段已使用统一的可见 `*` 与屏幕阅读器文本标识。创建/编辑成功后会显示 Toast 并跳转至宠物管理列表；Server Action 同时失效 admin 列表、公共宠物列表、首页和对应宠物详情路径，确保后续导航读取最新数据。
-- 已通过 TypeScript、ESLint、schema 图片组合测试和 production build；本地浏览器请求因当前环境无法连接 Neon，在 Server Component 数据查询阶段返回 500，因此新版布局、图片 Dialog 和提交成功流程尚未完成真实浏览器验证。宠物管理列表本身仍待后续子步骤完成。
+- `/dashboard/admin/pets` 列表页已完成：使用独立 `getPetsForAdmin()` 支持 name 大小写不敏感模糊搜索、age 精确筛选、真实 species 筛选、status 筛选、createdAt 正/倒序以及偏移分页；使用 `createdAt + id` 保证排序确定性。
+- 列表筛选由 URL searchParams 驱动；应用任意搜索/筛选/排序时重置 page，分页链接保留全部条件。桌面端以 Table 展示，移动端以 Card 展示，两者共享同一查询结果和格式化 row model，并复用 `StatusBadge` 与通用 `Pagination`。
+- 筛选区已按设备分别设计：桌面端使用主搜索行与等宽高级筛选行；移动端默认仅展示名称搜索和 Filters 入口，Age/Species/Status/Created date 放入 Dialog，并显示已启用的高级筛选数量。
+- 列表、新建和编辑路由拥有与各自页面结构匹配的 Loading fallback；new/edit 共用 `PetFormSkeleton`，不会继承列表表格骨架。
+- 管理端当前只提供列表、筛选、分页、新建和编辑，不包含删除或批量操作。已通过 TypeScript、ESLint、schema 图片组合测试和 production build；列表筛选布局已在 1440px 桌面端和 390px 移动端（含高级筛选 Dialog）完成浏览器验证，创建/编辑流程由开发者完成验证。
 
 ### 公共 Header
 
@@ -110,10 +114,9 @@
 
 ## 后续步骤（已讨论，尚未开始）
 
-1. **完成管理员宠物管理** —— 浏览器验证创建/编辑表单，补充提交成功后的页面流转，并接入宠物管理列表入口。
-2. **进行移动端响应式适配走查**。
-3. **利用 DeepSeek API 实现 AI 宠物简介生成**（需考虑速率限制）。
-4. **构建 Vercel Cron 路由** —— 用于调用 `resetAndSeedDatabase()`。
-5. **搭建 Vitest + Testing Library 测试环境**。
-6. **完成 Vercel 生产部署**。
-7. **完善 README 架构设计决策章节**、录制演示视频并准备屏幕截图。
+1. **进行移动端响应式适配走查**。
+2. **利用 DeepSeek API 实现 AI 宠物简介生成**（需考虑速率限制）。
+3. **构建 Vercel Cron 路由** —— 用于调用 `resetAndSeedDatabase()`。
+4. **搭建 Vitest + Testing Library 测试环境**。
+5. **完成 Vercel 生产部署**。
+6. **完善 README 架构设计决策章节**、录制演示视频并准备屏幕截图。
