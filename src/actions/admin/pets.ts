@@ -10,6 +10,14 @@ import {
 } from '@/schemas/pets';
 import { PetStatus } from '@prisma/client';
 import { z } from 'zod';
+import { revalidatePath } from 'next/cache';
+
+function revalidatePetPaths(petId: string) {
+  revalidatePath('/');
+  revalidatePath('/pets');
+  revalidatePath(`/pets/${petId}`);
+  revalidatePath('/dashboard/admin/pets');
+}
 
 export type PetActionResult =
   | {
@@ -44,10 +52,12 @@ export async function createPetAction(
     };
   }
 
+  let petId: string;
+
   try {
     const { image, ...petData } = parsedResult.data;
 
-    await prisma.pet.create({
+    const pet = await prisma.pet.create({
       data: {
         ...petData,
         status: PetStatus.AVAILABLE,
@@ -59,12 +69,15 @@ export async function createPetAction(
         },
       },
     });
+    petId = pet.id;
   } catch (_error) {
     return {
       success: false,
       message: 'Operation failed. Please try again later.',
     };
   }
+
+  revalidatePetPaths(petId);
 
   return { success: true };
 }
@@ -116,6 +129,8 @@ export async function updatePetAction(
       message: 'Operation failed. Please try again later.',
     };
   }
+
+  revalidatePetPaths(id);
 
   return { success: true };
 }

@@ -59,6 +59,8 @@ import {
 } from '@/components/ui/input-group';
 import { PetGender, PetStatus } from '@prisma/client';
 import { PetImagePicker } from '@/components/features/pets/pet-image-picker';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 type Props = {
   mode: Mode;
@@ -67,12 +69,28 @@ type Props = {
   speciesList: string[];
 };
 
+function RequiredFieldLabel({
+  children,
+  ...props
+}: React.ComponentProps<typeof FieldLabel>) {
+  return (
+    <FieldLabel {...props}>
+      {children}
+      <span className="text-destructive" aria-hidden="true">
+        *
+      </span>
+      <span className="sr-only"> (required)</span>
+    </FieldLabel>
+  );
+}
+
 export function PetForm({
   mode,
   defaultValues,
   shelterList,
   speciesList,
 }: Props) {
+  const router = useRouter();
   const isEditMode = mode === Mode.Edit;
   const formSchema = isEditMode ? updatePetSchema : createPetSchema;
 
@@ -109,7 +127,16 @@ export function PetForm({
       if (result.message) {
         form.setError('root', { message: result.message, type: 'server' });
       }
+
+      return;
     }
+
+    toast.success(
+      isEditMode
+        ? `${values.name} was updated successfully.`
+        : `${values.name} was created successfully.`,
+    );
+    router.push('/dashboard/admin/pets');
   }
 
   return (
@@ -117,7 +144,8 @@ export function PetForm({
       <CardHeader className="border-b bg-muted/20 px-6 py-5 sm:px-8">
         <CardTitle className="text-xl">Pet details</CardTitle>
         <p className="text-sm text-muted-foreground">
-          Fields marked as required must be completed before saving.
+          Fields marked with <span className="text-destructive">*</span> are
+          required.
         </p>
       </CardHeader>
       <CardContent className="px-6 py-7 sm:px-8">
@@ -130,7 +158,9 @@ export function PetForm({
                   control={form.control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel htmlFor="pet-name">Name</FieldLabel>
+                      <RequiredFieldLabel htmlFor="pet-name">
+                        Name
+                      </RequiredFieldLabel>
                       <Input
                         {...field}
                         id="pet-name"
@@ -149,7 +179,9 @@ export function PetForm({
                   control={form.control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel htmlFor="pet-species">Species</FieldLabel>
+                      <RequiredFieldLabel htmlFor="pet-species">
+                        Species
+                      </RequiredFieldLabel>
                       <Combobox
                         items={speciesList}
                         value={field.value || null}
@@ -272,7 +304,9 @@ export function PetForm({
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="pet-shelter">Shelter</FieldLabel>
+                      <RequiredFieldLabel htmlFor="pet-shelter">
+                        Shelter
+                      </RequiredFieldLabel>
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger
                       id="pet-shelter"
@@ -302,7 +336,9 @@ export function PetForm({
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="pet-status">Status</FieldLabel>
+                    <RequiredFieldLabel htmlFor="pet-status">
+                      Status
+                    </RequiredFieldLabel>
                     <Select
                       value={field.value as PetStatus}
                       onValueChange={field.onChange}
@@ -374,7 +410,7 @@ export function PetForm({
                   className="lg:sticky lg:top-24"
                 >
                   <div className="space-y-1">
-                    <FieldLabel>Profile image</FieldLabel>
+                    <RequiredFieldLabel>Profile image</RequiredFieldLabel>
                     <FieldDescription>
                       The primary image shown throughout the adoption catalog.
                     </FieldDescription>
