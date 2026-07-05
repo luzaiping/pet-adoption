@@ -15,7 +15,7 @@
 
 ## 代码规范
 
-* 所有代码、注释、 文档：均使用英文；但 docs/project-context/ 里的文件除外，使用中文。
+* 所有代码、注释、文档均使用英文；但 `docs/project-context/` 与 `docs/knowledge-base/` 里的文件除外，使用中文。前者记录项目上下文，后者服务于中文学习与复习。
 * shadcn 组件 → 存放在 `components/ui/`；业务组件 → 存放在 `components/features/[domain]/`。
 * Server Actions 存放在 `actions/` 目录中（位于 `app/` 之外），并按业务领域进行拆分。
 * 简单表单（登录、注册、申请提交） → 使用 `useActionState` + Server Action，不引入 React Hook Form。复杂表单（宠物创建/编辑） → 使用 React Hook Form + Zod + shadcn `Form` 组件。
