@@ -439,7 +439,294 @@ species 既可以选择数据库已有值，也可以输入新值，因此需要
 
 `isSubmitting` 用于阻止重复提交，并给用户明确反馈。如果按钮放在 `<form>` 外，需要通过相同的 `form="pet-form"` 与表单 `id` 关联。
 
-## 8. Create/Edit 共用表单的边界
+## 8. 图片字段：从表单字符串到 Prisma 关联记录
+
+图片功能同时涉及三种不同的数据结构：
+
+```text
+Client form value:  image: string
+Zod output:         image: string
+Database relation:  Pet → PetImage[]
+```
+
+它们不需要保持完全相同。表单 DTO 应表达用户正在完成的操作，而不是机械复制数据库模型。
+
+当前业务只允许一张主图，因此客户端只需要提交图片路径：
+
+```ts
+type PetFormValues = {
+  // Other fields are omitted here.
+  image: string;
+};
+```
+
+客户端不提交 `isPrimary`，因为“一张图片必然是主图”是服务端业务规则。Server Action 在写入 `PetImage` 时统一补上 `isPrimary: true`，避免客户端控制本不需要暴露的数据库字段。
+
+### 8.1 图片路径白名单
+
+静态图片路径由共享常量生成：
+
+```ts
+const createPetImagePaths = (species: 'dog' | 'cat') =>
+  Array.from(
+    { length: 15 },
+    (_, index) =>
+      `/pets/${species}-${String(index + 1).padStart(2, '0')}.jpg`,
+  );
+
+export const DOG_PET_IMAGE_PATHS = createPetImagePaths('dog');
+export const CAT_PET_IMAGE_PATHS = createPetImagePaths('cat');
+export const COMMON_PET_IMAGE_PATH = '/pets/common.jpg';
+
+export const PET_IMAGE_PATHS = [
+  ...DOG_PET_IMAGE_PATHS,
+  ...CAT_PET_IMAGE_PATHS,
+  COMMON_PET_IMAGE_PATH,
+];
+```
+
+Schema 不接受任意字符串路径：
+
+```ts
+const petImageSchema = z.string().refine(
+  (imagePath) => PET_IMAGE_PATHS.includes(imagePath),
+  'Please select a valid pet image.',
+);
+```
+
+这层校验防止绕过图片选择器后提交：
+
+```text
+/uploads/arbitrary-file.exe
+https://untrusted.example/image.jpg
+/pets/not-exists.jpg
+```
+
+为什么这里使用 `z.string().refine()`，而不是直接写 `z.enum()`？图片列表由 `Array.from()` 在运行时生成，TypeScript 通常把它推断成 `string[]`，而 `z.enum()` 更适合编译期已知的非空字符串元组。`refine()` 仍能在运行时严格限制白名单，只是推导类型保持为 `string`。
+
+### 8.2 单字段合法不等于字段组合合法
+
+`/pets/dog-01.jpg` 本身属于合法路径，但下面的组合仍然不合法：
+
+```ts
+{
+  species: 'Rabbit',
+  image: '/pets/dog-01.jpg',
+}
+```
+
+单字段 schema 无法判断两个字段的关系，因此项目使用 `superRefine()` 做对象级交叉校验：
+
+```ts
+function validateImageMatchesSpecies(
+  values: { species: string; image: string },
+  context: z.RefinementCtx,
+) {
+  const allowedImages = getPetImagePathsForSpecies(values.species);
+
+  if (!allowedImages.includes(values.image)) {
+    context.addIssue({
+      code: 'custom',
+      path: ['image'],
+      message: 'Please select an image that matches the pet species.',
+    });
+  }
+}
+```
+
+`path: ['image']` 将交叉校验错误挂到 image 字段。客户端通过现有的 `fieldState.error → FieldError` 路径展示，服务端通过 `z.flattenError()` 返回时也会出现在 `fieldErrors.image`。
+
+Schema 组合方式是：
+
+```ts
+const petFieldsSchema = z.object({
+  species: z
+    .string()
+    .trim()
+    .min(1, 'Species is required.')
+    .transform(normalizePetSpecies),
+  image: petImageSchema,
+  // Other fields are omitted here.
+});
+
+export const createPetSchema = petFieldsSchema.superRefine(
+  validateImageMatchesSpecies,
+);
+
+export const updatePetSchema = petFieldsSchema
+  .extend({
+    id: z.string(),
+    status: z.enum(PetStatus),
+  })
+  .superRefine(validateImageMatchesSpecies);
+```
+
+这里先保留一个未添加 refinement 的 `petFieldsSchema`，然后分别构建 create/update schema。这样 update 可以先 `.extend()`，最后再应用同一套交叉校验。
+
+### 8.3 species 归一化与图片匹配的执行顺序
+
+species 会先经过 transform：
+
+```ts
+.transform(normalizePetSpecies)
+```
+
+因此输入 `' dog '` 在进入 `superRefine()` 时已经变成 `'Dog'`，图片匹配函数只需要处理规范化值。
+
+图片选择器为了在用户输入期间及时切换图片池，也调用同一个 `normalizePetSpecies()`。这只是客户端联动体验；服务端 schema 中的 transform 和 `superRefine()` 才是最终安全边界。
+
+联动规则如下：
+
+- species 为空：image 保持空字符串，等待用户先选择 species。
+- species 为 Dog/Cat：展示对应图片池；旧图片不属于新池时清空。
+- species 为其他非空值：自动写入 `/pets/common.jpg`。
+
+不能只依赖选择器的清空逻辑，因为攻击者可以跳过组件直接调用 Server Action。
+
+### 8.4 Create：把扁平字段转换为关联创建
+
+通过 schema 后，先从宠物普通字段中分离 image：
+
+```ts
+const { image, ...petData } = parsedResult.data;
+```
+
+然后使用 Prisma nested create：
+
+```ts
+const pet = await prisma.pet.create({
+  data: {
+    ...petData,
+    status: PetStatus.AVAILABLE,
+    images: {
+      create: {
+        url: image,
+        isPrimary: true,
+      },
+    },
+  },
+});
+```
+
+`image` 不是 `Pet` 数据库列，所以不能直接把完整的 `parsedResult.data` 展开进 `Pet.data`。它必须被转换成 relation nested write。
+
+这次 Prisma 操作会一起创建：
+
+1. 一条 `Pet`。
+2. 一条关联到该 Pet 的 `PetImage`。
+3. 该图片的 `isPrimary` 固定为 true。
+
+nested write 作为一个原子操作执行。如果关联图片创建失败，Pet 创建也不会单独保留下来。
+
+### 8.5 Update：删除旧图片并创建新图片
+
+当前业务只保留一张图片，也不要求保留旧 `PetImage.id`，因此更新采用“删除后重建”：
+
+```ts
+const { id, image, ...data } = parsedResult.data;
+
+await prisma.pet.update({
+  where: { id },
+  data: {
+    ...data,
+    images: {
+      deleteMany: {},
+      create: {
+        url: image,
+        isPrimary: true,
+      },
+    },
+  },
+});
+```
+
+在 Pet 的 nested write 中，`deleteMany: {}` 只删除当前这只宠物关联的图片，不会删除其他宠物的图片。随后创建唯一的新图片。
+
+删除和创建属于同一个 `pet.update()`，因此保持原子性，不会出现已经删除旧图但创建新图失败后留下半成品的状态。
+
+这种方案的代价是每次更新都会生成新的 `PetImage.id`。当前图片没有被其他模型引用，也没有独立的说明、审核状态等业务数据，所以该代价可以接受。
+
+### 8.6 Edit defaultValues：把关联模型压平为表单值
+
+编辑页查询得到的是关系结构：
+
+```ts
+{
+  id: 'pet-id',
+  images: [
+    {
+      id: 'image-id',
+      url: '/pets/cat-03.jpg',
+      isPrimary: true,
+    },
+  ],
+}
+```
+
+而表单需要扁平的 `image: string`，因此页面显式映射：
+
+```ts
+const defaultValues: UpdatePetForm = {
+  id: pet.id,
+  name: pet.name,
+  // Other fields are omitted here.
+  image: pet.images[0]?.url ?? COMMON_PET_IMAGE_PATH,
+};
+```
+
+不要把 Prisma 查询结果直接断言成 `UpdatePetForm`。二者结构不同，`as UpdatePetForm` 只会隐藏错误，不会执行 `images[0].url → image` 的运行时转换。
+
+### 8.7 如果未来改为多图
+
+当业务允许多张图片时，表单 schema 可以变为对象数组：
+
+```ts
+const editablePetImageSchema = z.object({
+  id: z.string().optional(),
+  url: petImageSchema,
+  isPrimary: z.boolean(),
+});
+
+const multiImagePetSchema = z
+  .object({
+    images: z.array(editablePetImageSchema).min(1).max(5),
+  })
+  .superRefine((values, context) => {
+    const primaryCount = values.images.filter(
+      (image) => image.isPrimary,
+    ).length;
+
+    if (primaryCount !== 1) {
+      context.addIssue({
+        code: 'custom',
+        path: ['images'],
+        message: 'Exactly one image must be selected as primary.',
+      });
+    }
+  });
+```
+
+如果仍不需要保留图片 ID，可以继续使用：
+
+```ts
+images: {
+  deleteMany: {},
+  create: parsedImages.map(({ url, isPrimary }) => ({
+    url,
+    isPrimary,
+  })),
+}
+```
+
+如果需要保留 ID，则要把提交数组拆成三组：
+
+- 有 ID 且仍存在：nested `update`。
+- 没有 ID：nested `create`。
+- 数据库存在但提交数组没有：nested `deleteMany`。
+
+此时服务端还必须查询并确认客户端提交的每个图片 ID 都属于当前 Pet，不能直接相信客户端 ID。
+
+## 9. Create/Edit 共用表单的边界
 
 共用表单适合大多数字段相同的场景：
 
@@ -464,7 +751,7 @@ status: PetStatus.AVAILABLE
 
 复用的目标是减少重复业务逻辑，而不是强行只保留一个 RHF 实例。
 
-## 9. 常见错误清单
+## 10. 常见错误清单
 
 ### 校验与数据
 
@@ -473,6 +760,8 @@ status: PetStatus.AVAILABLE
 - 把 transform 写在组件事件中，导致 Server Action 可绕过归一化。
 - 使用 `.partial()` 放宽 update schema，但业务实际要求全量更新。
 - 把数据库原始异常返回给页面。
+- 只校验图片路径属于白名单，没有校验 species 与图片池是否匹配。
+- 把表单的 `image` 字段直接展开到 Prisma Pet data，没有转换成 nested write。
 
 ### RHF 与控件
 
@@ -490,8 +779,9 @@ status: PetStatus.AVAILABLE
 - 在 `'use server'` 文件导出 enum、常量等运行时值；这类共享值应放在普通模块中。
 - 用宽泛 `try/catch` 捕获并吞掉 `redirect()` 或 `notFound()`。
 - 成功写入后忘记按页面需求执行 revalidation 或导航。
+- 编辑单图时只创建新图片但没有删除旧图片，导致图片记录不断累积。
 
-## 10. 下次实现复杂表单时的顺序
+## 11. 下次实现复杂表单时的顺序
 
 1. 先定义 create/update schema，包括 trim、transform 和错误消息。
 2. 明确 schema input/output 是否不同。
@@ -503,4 +793,5 @@ status: PetStatus.AVAILABLE
 8. 展示客户端 `fieldState.error`。
 9. 将服务端 `fieldErrors/message` 通过 `setError` 写回 RHF。
 10. 增加提交中状态、成功后的导航/revalidation。
-11. 运行 TypeScript、ESLint、production build，并在浏览器验证键盘操作、空值、错误和重复提交。
+11. 对关联字段明确设计“表单 DTO → Prisma nested write”的转换，不要直接断言类型相同。
+12. 运行 TypeScript、ESLint、production build，并在浏览器验证键盘操作、空值、错误和重复提交。
