@@ -41,7 +41,10 @@ export default function DashboardNav({ role }: Props) {
 
   return (
     menuItems.length > 0 && (
-      <nav aria-label="Dashboard navigation" className="flex gap-2">
+      <nav
+        aria-label="Dashboard navigation"
+        className="grid grid-cols-3 gap-1 sm:flex sm:gap-2"
+      >
         {menuItems.map(
           ({ href, label, shortLabel, icon: Icon, matchSubPath }) => {
             const hasPathMatched =
@@ -51,13 +54,13 @@ export default function DashboardNav({ role }: Props) {
                 key={href}
                 asChild
                 variant={hasPathMatched ? 'link' : 'ghost'}
-                className="justify-start"
+                className="min-w-0 justify-center px-1 sm:justify-start sm:px-2.5"
               >
                 <Link
                   href={href}
                   aria-current={hasPathMatched ? 'page' : undefined}
                 >
-                  <Icon aria-hidden="true" />
+                  <Icon className="hidden sm:block" aria-hidden="true" />
                   <span className="sm:hidden">{shortLabel}</span>
                   <span className="hidden sm:inline">{label}</span>
                 </Link>
