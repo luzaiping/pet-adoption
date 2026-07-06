@@ -1,5 +1,3 @@
-// CLAUDE-REVIEW
-
 import { auth } from '@/auth';
 import { getUserApplications } from '@/lib/applications';
 import { redirect } from 'next/navigation';

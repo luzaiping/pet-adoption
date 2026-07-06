@@ -1,5 +1,3 @@
-// CLAUDE-REVIEW
-
 import { ApplicationStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 

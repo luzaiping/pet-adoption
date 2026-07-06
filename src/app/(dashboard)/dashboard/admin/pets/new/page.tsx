@@ -1,5 +1,3 @@
-// CLAUDE-STUCK
-
 import { PetForm } from '@/components/features/admin/pet-form';
 import { Mode } from '@/lib/constants/pets';
 import {

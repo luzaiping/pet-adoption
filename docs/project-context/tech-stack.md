@@ -1,7 +1,5 @@
 # 技术栈与规范 —— 宠物领养系统
 
-此内容与本项目的 claude.ai 项目指令（Project Instructions）内容保持一致。当其中任意一份发生变更时，请确保两边同步更新。
-
 ## 锁定的版本
 
 * Next.js 15.5.19
@@ -15,7 +13,7 @@
 
 ## 代码规范
 
-* 所有代码、注释、文档均使用英文；但 `docs/project-context/` 与 `docs/knowledge-base/` 里的文件除外，使用中文。前者记录项目上下文，后者服务于中文学习与复习。
+* 所有代码、注释和面向仓库读者的文档均使用英文；`docs/project-context/` 中的内部项目上下文使用中文。
 * shadcn 组件 → 存放在 `components/ui/`；业务组件 → 存放在 `components/features/[domain]/`。
 * Server Actions 存放在 `actions/` 目录中（位于 `app/` 之外），并按业务领域进行拆分。
 * 简单表单（登录、注册、申请提交） → 使用 `useActionState` + Server Action，不引入 React Hook Form。复杂表单（宠物创建/编辑） → 使用 React Hook Form + Zod + shadcn `Form` 组件。

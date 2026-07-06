@@ -1,5 +1,3 @@
-// CLAUDE-REVIEW
-
 import { Badge } from '@/components/ui/badge';
 import { ApplicationStatus, PetStatus } from '@prisma/client';
 

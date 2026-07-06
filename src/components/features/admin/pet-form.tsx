@@ -1,5 +1,3 @@
-// CLAUDE-STUCK
-
 'use client';
 
 import { Controller, useForm, useWatch } from 'react-hook-form';

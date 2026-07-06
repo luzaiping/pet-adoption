@@ -1,5 +1,3 @@
-// CLAUDE-REVIEW
-
 'use client';
 
 import { withdrawApplicationAction } from '@/actions/applications';
