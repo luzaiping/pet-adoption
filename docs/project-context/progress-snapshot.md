@@ -28,7 +28,7 @@
 ### 公共宠物浏览
 
 - `src/lib/pets.ts` —— 编写了 `getPets()`（支持按物种筛选、偏移量分页、确定性 `orderBy` 排序）以及 `getPetById()`（包含关联的图片和收容所信息）。
-- `/pets` 列表页（由 ChatGPT 实现） —— 通过 `StatusBadge` 展示所有状态的宠物，切换物种筛选时会将页码重置为 1，每页展示 12 条记录 —— 功能已验证，但被开发者标记为实现质量弱于其他页面，后续值得进行一次代码审查走查。
+- `/pets` 列表页（由 ChatGPT 实现） —— 通过 `StatusBadge` 展示所有状态的宠物，切换物种筛选时会将页码重置为 1，每页展示 12 条记录；页面容器已统一为 `max-w-7xl` 并补齐响应式水平间距，320px 与 390px 下无横向溢出 —— 功能已验证，但被开发者标记为实现质量弱于其他页面，后续值得进行一次代码审查走查。
 - `/pets/[id]` 详情页（在接管 ChatGPT 的工作后由 Claude 实现） —— 采用 `await params` 模式，针对不存在的宠物调用 `notFound()` 并提供自定义的 `not-found.tsx` 页面，实现了图片画廊、物种/品种/年龄/性别/描述展示、收容所信息以及领养申请提交面板的对接 —— 除了次级缩略图代码路径尚未测试外（当前种子数据每只宠物仅分配了一张主图），其余均已通过验证。
 - 在 `/pets` 和 `/pets/[id]` 页面均加入了 `loading.tsx`（基于 Suspense 的骨架屏，用于应对 Neon 数据库冷启动延迟） —— 已验证其在分页/筛选条件改变时也会短暂触发。
 - 共享组件包括：`pet-card.tsx`、`pet-filters.tsx`、`pagination.tsx`、`status-badge.tsx` —— 后面两个组件采用了通用化设计，预备供未来的管理员宠物页面复用。
@@ -63,7 +63,7 @@
 - `/dashboard` 已改为服务端角色分发入口：USER 跳转至“我的申请”，ADMIN 跳转至 Admin Overview，STAFF 跳转至 Forbidden，未登录用户跳转至登录页。
 - 已创建 Server Component `DashboardMenu`，在组件内部校验 session；USER 仅显示 Header，ADMIN 显示 Overview、Applications Queue、Pet Management 三项独立导航。品牌统一链接公开首页 `/`。
 - 路径高亮隔离在使用 `usePathname()` 的 Client Component `DashboardNav` 中：Overview 精确匹配，审核队列与宠物管理支持子路径匹配，并通过 `aria-current` 标记当前页面。
-- Dashboard Header 展示当前用户、角色标识与退出入口；移动端会缩短菜单文案并将退出按钮收缩为保留无障碍名称的图标入口，390px 视口下无横向溢出。
+- Dashboard Header 展示当前用户、角色标识与退出入口；移动端会缩短菜单文案并将退出按钮收缩为保留无障碍名称的图标入口。管理员导航在移动端使用三等分网格并隐藏装饰性图标，从 `sm` 起恢复完整文案与图标；320px 与 390px 视口下均无横向溢出。
 - 已创建极简 `signOutAction` 包裹 Auth.js `signOut()`，登出后跳转至公开的 `/login` 页面。
 
 ### Admin Overview
@@ -106,6 +106,12 @@
 - Featured Pets 复用现有 `PetCard`，支持不足 4 条及空状态，并提供全量宠物入口；当前文案明确定位为 Featured，而非个性化推荐。
 - 已通过 lint、类型检查和 production build；首页构建结果为动态服务端路由。浏览器验证覆盖 1280px 与 390px：桌面四列、移动端单列，统计在两种视口均保持三列，页面无横向溢出或运行时错误。
 
+### 移动端响应式走查
+
+- 已对公开页、认证页、普通用户申请页、管理员 Overview、审核队列、宠物管理列表以及创建/编辑表单进行源码级响应式审查；既有页面普遍已使用单列回落、响应式间距、移动端卡片和 Dialog 布局，未发现其他明确的窄屏溢出点。
+- 走查发现并修复两处问题：`/pets` 列表缺少移动端水平间距；管理员 Dashboard 三项导航在 320px 下缺少可靠的宽度约束。
+- 修复后已通过 ESLint、TypeScript 和 production build。浏览器运行时验证覆盖 320px 与 390px：`/pets` 首张卡片在 320px 下左右各保留 16px；管理员三项导航完整位于内容区内；两个页面的文档宽度均与视口宽度一致，控制台无运行时错误。
+
 ## 已知问题 / 观察清单
 
 - `/pets` 列表页的代码质量被开发者标记为平庸 —— 功能虽未损坏，但它是后续进行更细致的代码审查走查的候选对象。
@@ -114,9 +120,8 @@
 
 ## 后续步骤（已讨论，尚未开始）
 
-1. **进行移动端响应式适配走查**。
-2. **利用 DeepSeek API 实现 AI 宠物简介生成**（需考虑速率限制）。
-3. **构建 Vercel Cron 路由** —— 用于调用 `resetAndSeedDatabase()`。
-4. **搭建 Vitest + Testing Library 测试环境**。
-5. **完成 Vercel 生产部署**。
-6. **完善 README 架构设计决策章节**、录制演示视频并准备屏幕截图。
+1. **利用 DeepSeek API 实现 AI 宠物简介生成**（需考虑速率限制）。
+2. **构建 Vercel Cron 路由** —— 用于调用 `resetAndSeedDatabase()`。
+3. **搭建 Vitest + Testing Library 测试环境**。
+4. **完成 Vercel 生产部署**。
+5. **完善 README 架构设计决策章节**、录制演示视频并准备屏幕截图。
