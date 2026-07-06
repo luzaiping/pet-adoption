@@ -57,6 +57,7 @@
 - 已创建返回布尔值的 `isDemoMode()` helper，统一读取 `IS_DEMO` 环境变量。
 - `registerAction` 与 `submitApplicationAction` 均已在顶部接入演示模式拦截；两者的数据库操作错误会转换为通用 return 文案，不暴露 Prisma 原始错误。
 - `registerAction` 的 `signIn()` 仍保留独立的 `AuthError` 处理；`withdrawApplicationAction`、`approveApplicationAction` 与 `rejectApplicationAction` 继续采用适配 `useMutation` 的 Promise 抛错方式。
+- 已新增 `/api/cron/reset-demo` Vercel Cron Route Handler：使用 `CRON_SECRET` Bearer Token 鉴权，在 Node.js runtime 中复用 `resetAndSeedDatabase()`，成功返回重置摘要，失败仅在服务端记录原始错误。`vercel.json` 配置为每日 05:00 UTC 调用；`.env.example` 已补充密钥占位符。已通过 ESLint、TypeScript 和 production build，真实重置调用留待生产部署阶段验证。
 
 ### Dashboard 导航
 
@@ -123,11 +124,10 @@
 - `/pets` 列表页的代码质量被开发者标记为平庸 —— 功能虽未损坏，但它是后续进行更细致的代码审查走查的候选对象。
 - 详情页的多图缩略图展示行从未在真实数据下运行过 —— 因为当前的种子数据只为每只宠物分配了一张（主）图片；后续可以考虑为至少一只宠物种子数据分配多张图片。
 - `/login` 仍在使用手写的验证逻辑，而非 Zod —— 导致 `/register` 与 `/login` 的实现风格不一致；此项属于低优先级清理任务。
+- **利用 DeepSeek API 实现 AI 宠物简介生成**（需考虑速率限制）。
+- **搭建 Vitest + Testing Library 测试环境**。
 
 ## 后续步骤（已讨论，尚未开始）
 
-1. **利用 DeepSeek API 实现 AI 宠物简介生成**（需考虑速率限制）。
-2. **构建 Vercel Cron 路由** —— 用于调用 `resetAndSeedDatabase()`。
-3. **搭建 Vitest + Testing Library 测试环境**。
-4. **完成 Vercel 生产部署**。
-5. **完善 README 架构设计决策章节**、录制演示视频并准备屏幕截图。
+1. **完成 Vercel 生产部署**，配置生产环境变量并验证每日 Cron 重置。
+2. **完善 README 架构设计决策章节**、录制演示视频并准备屏幕截图。
