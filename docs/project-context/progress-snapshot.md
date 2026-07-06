@@ -57,7 +57,12 @@
 - 已创建返回布尔值的 `isDemoMode()` helper，统一读取 `IS_DEMO` 环境变量。
 - `registerAction` 与 `submitApplicationAction` 均已在顶部接入演示模式拦截；两者的数据库操作错误会转换为通用 return 文案，不暴露 Prisma 原始错误。
 - `registerAction` 的 `signIn()` 仍保留独立的 `AuthError` 处理；`withdrawApplicationAction`、`approveApplicationAction` 与 `rejectApplicationAction` 继续采用适配 `useMutation` 的 Promise 抛错方式。
-- 已新增 `/api/cron/reset-demo` Vercel Cron Route Handler：使用 `CRON_SECRET` Bearer Token 鉴权，在 Node.js runtime 中复用 `resetAndSeedDatabase()`，成功返回重置摘要，失败仅在服务端记录原始错误。`vercel.json` 配置为每日 05:00 UTC 调用；`.env.example` 已补充密钥占位符。已通过 ESLint、TypeScript 和 production build，真实重置调用留待生产部署阶段验证。
+- 已新增 `/api/cron/reset-demo` Vercel Cron Route Handler：使用 `CRON_SECRET` Bearer Token 鉴权，在 Node.js runtime 中复用 `resetAndSeedDatabase()`，成功返回重置摘要，失败仅在服务端记录原始错误。`vercel.json` 配置为每日 05:00 UTC 调用；`.env.example` 已补充密钥占位符。生产环境 Cron 已注册并启用，手动运行返回 HTTP 200，确认鉴权、数据库重置与重新灌入流程完整执行。
+
+### Vercel 生产部署
+
+- 项目已通过 GitHub `main` 分支持续部署至 `https://pet-adoption-eight-mu.vercel.app/`；生产环境已配置 Neon、Auth.js、演示模式和 Cron 所需变量，公开页面、演示账号切换及 Dashboard 流程已完成开发者验证。
+- 为避免 Vercel 依赖缓存导致 Prisma Client 过期，production build 在 `next build` 前显式执行 `prisma generate`；修复后的部署已成功完成。
 
 ### Dashboard 导航
 
@@ -129,5 +134,4 @@
 
 ## 后续步骤（已讨论，尚未开始）
 
-1. **完成 Vercel 生产部署**，配置生产环境变量并验证每日 Cron 重置。
-2. **完善 README 架构设计决策章节**、录制演示视频并准备屏幕截图。
+1. **完善 README 架构设计决策章节**、录制演示视频并准备屏幕截图。
